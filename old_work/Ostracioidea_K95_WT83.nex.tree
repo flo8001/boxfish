@@ -1,0 +1,13 @@
+#NEXUS
+
+[ID: 4541270427]
+begin trees;
+   [Note: This tree contains information on the topology, 
+          branch lengths (if present), and the probability
+          of the partition indicated by the branch.]
+   tree con_50_majrule = (acant_poly:0.016099,((lactp_bica:0.008640,(lactp_trig:0.007305,lactp_triq:0.013951)0.79:0.012677)0.99:0.107952,(((lacto_diap:0.013477,(ostr_melea:0.010302,((ostr_cyanu:0.013736,ostr_cubic:0.006860,ostr_whitl:0.006701)0.76:0.014087,(ostr_nasus:0.006878,Ostr_rhino:0.006716)1.00:0.058383)0.86:0.020759)0.98:0.215177)0.64:0.056824,lacto_forn:0.044647,lacto_corn:0.011653,(tetr_repub:0.024297,tetr_gibbo:0.011502,tetr_conca:0.007258)0.99:0.095282)1.00:0.467504,(((Kentrocapros:0.006761,Polyplacapros:0.006522)0.90:0.033498,Aracana:0.013942)0.50:0.019459,(Strophiurichthys:0.007259,(Anoplocapros:0.006918,(Caprichthys:0.012717,Capropygia:0.007221)0.92:0.019893)0.78:0.018461)0.57:0.018886)0.97:0.215482)0.96:0.205205)0.95:0.083780,(acant_quad:0.007248,(acant_nota:0.006755,acant_guin:0.006842)0.99:0.032329)0.53:0.013427);
+
+   [Note: This tree contains information only on the topology
+          and branch lengths (mean of the posterior probability density).]
+   tree con_50_majrule = (acant_poly:0.016099,((lactp_bica:0.008640,(lactp_trig:0.007305,lactp_triq:0.013951):0.012677):0.107952,(((lacto_diap:0.013477,(ostr_melea:0.010302,((ostr_cyanu:0.013736,ostr_cubic:0.006860,ostr_whitl:0.006701):0.014087,(ostr_nasus:0.006878,Ostr_rhino:0.006716):0.058383):0.020759):0.215177):0.056824,lacto_forn:0.044647,lacto_corn:0.011653,(tetr_repub:0.024297,tetr_gibbo:0.011502,tetr_conca:0.007258):0.095282):0.467504,(((Kentrocapros:0.006761,Polyplacapros:0.006522):0.033498,Aracana:0.013942):0.019459,(Strophiurichthys:0.007259,(Anoplocapros:0.006918,(Caprichthys:0.012717,Capropygia:0.007221):0.019893):0.018461):0.018886):0.215482):0.205205):0.083780,(acant_quad:0.007248,(acant_nota:0.006755,acant_guin:0.006842):0.032329):0.013427);
+end;

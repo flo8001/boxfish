@@ -1,0 +1,64 @@
+>Anoplocapros_amygdaloides [source=MISSING] [accession=NA] [len=0]
+
+>Anoplocapros_lenticularis [source=NCBI] [accession=510950284] [len=816]
+CCTTTACCCATCTAACTGCCTTGGCATGCTATTATTGTCTGACGCCCACCAGTGCACCAAGCTGTCAGAGCTGTCCTGGGGCATGTGCCTCAGCAACTTCCCTGCTATTTGCAAGACAGAGGACTTCCTCCAACTGCCCAAAGATATGGTGGTTCAGCTTTTGTCACACGAAGAGCTAGAGACTGAAGATGAAAGACTGGTTTATGAAGCTGCACTCAATTGGATCAACTATGACCTGGAAAAGAGGCATGGCCACCTTCCAGAGCTCCTGAGAACGGTCCGTCTCGCCCTTCTGCCTGCCATCTTTCTCATGGAGAATGTTTCTACAGAAGAGTTGATCAACGCCCAAGCAAAGAGCAAGGAGTTGGTGGATGAAGCTATCCGCTGTAAGCTGAAGATCCTGCAGAATGATGGTGTTGTTAACAGCCCGTGTGCTCGACCAAGAAAAACCAGCCATGCCCTCTTTCTTCTGGGTGGGCAGACTTTCATGTGCGACAAGTTGTACCTGGTGGACCAGAAAGCCAAAGAGATCATCCCCAAGGCTGACATTCCCAGCCCCAGGAAGGAGTTCAGCGCCTGCGCCATTGGCTGTAAGGTGTACATCACTGGTGGGAGAGGCTCAGAGAATGGTGTGTCCAAAGATGTGTGGGTCTACGACACCGTCCATGAGGAATGGTCGAAGGCAGCACCCATGCTCATTGCCAGGTTTGGCCATGGCTCCGCGGAGCTGAAACACTGCCTGTATGTGGTAGGAGGTCACACTGCAGCAACTGGTTGCCTCCCGGCCTCTCCATCTGTATCACTCAAACAGGTGGA
+>Anoplocapros_inermis [source=MISSING] [accession=NA] [len=0]
+
+>Strophiurichthys_robustus [source=MISSING] [accession=NA] [len=0]
+
+>Aracana_aurita [source=NCBI] [accession=510950286] [len=853]
+TTCAGGACATCCGAGATGCCTGTGCTGAATTTCTAGAGAGAAACCTTTACCCATCTAACTGCCTTGGCATGCTATTACTGTCTGACGCCCACCAGTGCACCAAGCTGTCAGAGCTGTCCTGGGGCATGTGCCTCAGCAACTTCCCTGCTATTTGCAAGACAGAGGACTTCCTCCAACTGCCCAAAGATATGGTGGTTCAGCTTTTGTCACACGAAGAGCTAGAGACTGAAGATGAAAGACTGGTTTATGAAGCTGCACTCAATTGGATCAACTATGACCTGGAAAAGAGGCATGGCCACCTTCCAGAGCTCCTGAGAACGGTCCGTCTCGCCCTTCTGCCTGCCATCTTTCTCATGGAGAATGTTTCTACAGAAGAGTTGATCAACGCCCAAGCMAAGAGCAAGGAGTTGGTGGATGAAGCTATCCGCTGTAAGCTGAAGATCCTGCAGAATGATGGTGTTGTTAACAGCCCATGTGCTCGACCAAGAAAAACCAGCCATGCCCTCTTTCTTCTGGGTGGGCAGACTTTCATGTGCGACAAGTTGTACCTGGTGGACCAGAAAGCCAAAGAGATCATCCCCAAGGCTGACATTCCCAGCCCCAGGAAGGAGTTCAGCGCCTGCGCCATTGGCTGTAAGGTGTACATCACTGGTGGGAGAGGCTCAGAGAATGGTGTGTCCAAAGATGTGTGGGTCTACGACACCGTCCATGAGGAATGGTCGAAGGCAGCACCCATGCTCATTGCCAGGTTTGGCCATGGCTCTGCGGAGCTGAAACACTGCCTGTATGTGGTAGGAGGTCACACTGCAGCAACTGGTTGCCTCCCGGCCTCTCCATCTGTATCACTCAAACA
+>Aracana_ornata [source=MISSING] [accession=NA] [len=0]
+
+>Capropygia_unistriata [source=MISSING] [accession=NA] [len=0]
+
+>Kentrocapros_aculeatus [source=MISSING] [accession=NA] [len=0]
+
+>Polyplacapros_tyleri [source=MISSING] [accession=NA] [len=0]
+
+>Acanthostracion_guineensis [source=MISSING] [accession=NA] [len=0]
+
+>Acanthostracion_notacanthus [source=MISSING] [accession=NA] [len=0]
+
+>Acanthostracion_polygonius [source=FToL] [accession=Acanthostracion_polygonius] [len=70]
+                                                                      
+>Acanthostracion_quadricornis [source=FToL] [accession=Acanthostracion_quadricornis] [len=880]
+ tt tctagagaga aaccttcacc catctaactg ccttggcatgctattactat ctgatgccca ccagtgcacc aagctgtcag agctctcctg gggcatgtgcctcagtaact tccccgccat ttgcaagaca gaggacttcc tccaactgcc caaagacatggtggttcagc ttttgtcaca cgaggagcta gagactgaag atgaaagact ggtttatgaagcagcactca attggatcaa ctatgacctr gacaagaggc atggccacct tccagagctcctgagaacgg tccgcctagc ccttctgccg gccatctttc tcatggagaa tgtttctacagaagagttga tcaacgccca agcgaagagc aaggagctgg tggatgaagc tatccgctgtaagctgaaga tcctgcagaa tgatggcgtt gtcaacagcc cgtgtgctcg accaagaaaaaccagccatg ccctctttct tctgggtggg cagactttca tgtgcgacaa gttgtacctggtggaccaga aagccaaaga gatcatcccc aaggctgaca ttcctagccc caggaaggagttcagcgcct gcgccattgg ctgtaaggtg tatatcactg gtgggagagg ctcagagaacggtgtgtcca aagatgtgtg ggtctacgac accgtccacg aggaatggtc gaaggcagcacccatgctca ttgccaggtt tggccatggc tctgcagagc tgaaacactg cctgtacgtggtgggaggtc acactgcagc aactggttgc ctcccggcct ctccatct 
+>Lactophrys_bicaudalis [source=FToL] [accession=Lactophrys_bicaudalis] [len=70]
+                                                                      
+>Lactophrys_trigonus [source=FToL] [accession=Lactophrys_trigonus] [len=70]
+                                                                      
+>Lactophrys_triqueter [source=FToL] [accession=Rhinesomus_triqueter] [len=880]
+ tt tctagagaga aaccttcacc catctaactg ccttggcatgctattactgt ctgatgccca ccagtgcacc aagctgtcag agctctcctg gggcatgtgcctcagtaact tccccgctat ttgcaagaca gaggacttcc tccaactgcc caaagacatggtggttcagc ttttgtcaca cgaggagcta gagactgaag atgaaagact ggtttatgaagcagcgctca attggatcaa ctatgacctg gacaagaggc atggccacct tccagagctcctgagaacgg tccgcctagc ccttctgcct gccatctttc tcatggagaa tgtttctacagaagagttga tcaacgccca agcgaagagc aaggagctgg tggatgaagc tatccgctgtaagctgaaga tcctgcagaa tgatggcgtt gtcaacagcc catgtgctcg accaagaaaaaccagccatg ccctctttct tctgggtggg cagactttca tgtgtgacaa gttgtacctggtggaccaga aagccaaaga gatcatcccc aaggctgaca ttcctagccc caggaaggagttcagcgcct gcgccattgg ctgtaaggtg tatatcactg gtgggagagg ctcagagaacggtgtgtcca aagatgtgtg ggtctacgac actgtccacg aggaatggtc aaaggccgcacccatgctca ttgctaggtt tggccatggc tctgcagagc tgaaacactg cctctacgtggtaggaggtc acactgcagc aactggttgc ctcccggcct ctccgtct 
+>Lactoria_cornuta [source=FToL] [accession=Lactoria_cornuta] [len=880]
+ tt tcttgagaga aaccttcacc catccaactg ccttggcatgctgttactgt ccgatgccca ccagtgcacc aagttgtcag agctctcctg gggcatgtgcctcagtaact tccctgctat ttgcaagaca gaggacttcc tccaactgcc caaagacatggtggttcagc ttttgtcaca cgaggagcta gagacggaag atgaaagact ggtttatgaagctgcactca attggatcaa ctatgacctg gaaaagaggc atggccacct tccagagctcctgagaacgg tccgtctagc ccttctgcct gccatctttc tcatggagaa tgtttctacagaagagttga tcaacgctca agcaaagagc aaggagctgg tggatgaagc tatccgctgtaaactgaaga tcctgcagaa tgatggtgta gtcaacagcc cgtgtgctcg accaagaaaaaccagccatg cactctttct tctgggtggc cagactttca tgtgtgacaa gttgtacctggtggaccaga aagccaaaga gatcatccct aaggctgaca ttcctagccc caggaaggagttcagcgcct gtgccattgg ctgtaaggtg tacatcacag gtgggagagg ctcagagaatggtgtgtcca aagatgtgtg ggtctacgac actgtccacg aggaatggtc gaaggctgcacccatgctca ttgccaggtt tggccatggc tctgcggagc tgaagcactg cctctatgtggtaggaggtc atactgcagc aactggttgc cttccggcct ctccgtct 
+>Lactoria_diaphana [source=FToL] [accession=Lactoria_diaphana] [len=70]
+                                                                      
+>Lactoria_fornasini [source=FToL] [accession=Tetrosomus_fornasini] [len=70]
+                                                                      
+>Lactoria_paschae [source=MISSING] [accession=NA] [len=0]
+
+>Ostracion_cubicus [source=FToL] [accession=Ostracion_cubicus] [len=910]
+cgagatgcct gtgctgaatt tcttgagaga aaccttcacc catctaactg ccttggcatgctattactgt ccgatgccca ccagtgcacc aagctgtcag agctctcctg gggcatgtgcctcagtaact tccccgctat ttgcaagaca gaggacttcc tccaactgcc caaagacatggtggttcagc ttttgtcaca cgaggagcta gagactgaag atgaaagact ggtttatgaagctgcactca attggatcaa ctatgacctg gaaaagaggc atggccacct accagagctcctgagaacag tccgtctagc ccttctacct gccatctttc tcatggagaa tgtttctacagaagagttga tcaacgccca agcgaagagc aaggagctgg tggacgaagc tatccgctgtaagctgaaga tcctgcagaa tgatggcgtt gtcaacagcc cgtgtgctcg accaagaaaaaccagccatg cactctttct tctgggtggg cagactttca tgtgtgacaa gttgtacctggtggaccaga aagccaaaga gatcatcccc aaggctgaca ttcctagccc caggaaagagttcagcgcct gcgccattgg ctgtaaggtg tacatcactg gtgggagagg ctcggagaatggtgtgtcca aagatgtgtg ggtctacgac actgtccacg aggaatggtc gaaggcagcacccatgctca ttgccaggtt tggccatggc tctgcagagc tgaaacactg cctctatgtggtaggaggtc acactgcagc aactggttgc ctcccagcct ctccgtctgt atcactcaaa
+>Ostracion_cyanurus [source=MISSING] [accession=NA] [len=0]
+
+>Ostracion_immaculatus [source=FToL] [accession=Ostracion_immaculatus] [len=70]
+                                                                      
+>Ostracion_meleagris [source=FToL] [accession=Ostracion_meleagris] [len=70]
+                                                                      
+>Ostracion_nasus [source=MISSING] [accession=NA] [len=0]
+
+>Rhynchostracion_rhinorhynchus [source=FToL] [accession=Ostracion_rhinorhynchos] [len=70]
+                                                                      
+>Ostracion_solorensis [source=FToL] [accession=Ostracion_solorensis] [len=70]
+                                                                      
+>Ostracion_whitleyi [source=FToL] [accession=Ostracion_whitleyi] [len=70]
+                                                                      
+>Tetrosomus_concatenatus [source=FToL] [accession=Tetrosomus_concatenatus] [len=70]
+                                                                      
+>Tetrosomus_gibbosus [source=FToL] [accession=Tetrosomus_gibbosus] [len=70]
+                                                                      
+>Ostracion_reipublicae [source=FToL] [accession=Tetrosomus_reipublicae] [len=70]
+                                                                      
+>Triodon_macropterus [source=NCBI] [accession=510950354] [len=849]
+CCGCGATGCCTGTGCTGAATTTCTAGAGCGAAATCTCCACCCATCTAACTGCCTTGGCATGCTGTTGCTGTCTGACGCTCACCAGTGCACCAAGCTGTCAGAGCTCTCCTGGGGCATGTGCCTCAGCAACTTTCCTGCTATTTGCAAGACAGAGGACTTCCTCCAACTGCCCAAAGATATGGTGGTGCAGCTTTTGTCACATGAGGAGCTAGAAACTGAGGATGAGCGACTGGTTTATGAAGCTGCCCTCAATTGGATCAACTATGACCTGGAAAAGAGGCACTGCCACCTTCCAGAGCTCCTGAGAACGGTCCGTCTAGCCCTTCTGCCTGCCATCTTTCTCATGGAGAATGTTTCCACAGAAGAGCTGATCAACGCCCAGGCCAAGAGCAAGGAGCTGGTGGATGAAGCTATCCGCTGTAAGCTGAAGATCCTGCAAAATGACGGTGTCGTTAACAGCCCGTGTGCTCGACCAAGAAAAACCAGCCATGCCCTCTTTCTTCTGGGTGGGCAGACTTTCATGTGTGACAAGTTGTACCTGGTGGACCAGAAAGCCAAAGAGATCATCCCCAAGGCTGACATTCCCAGCCCCAGGAAGGAGTTCAGCGCCTGCGCCATTGGCTGTAAGGTGTACATCACTGGTGGGAGAGGCTCAGAAAATGGTGTGTCCAAAGATGTATGGGTCTACGACACTGTCCACGAGGAATGGTCGAAGGCGGCACCCATGCTCATTGCCAGGTTTGGCCATGGCTCTGCGGAGCTGAAACACTGCCTCTACGTGGTAGGAGGTCACACTGCAGCAACCGGTTGCCTCCCAGCCTCTCCGTCTGTATCACTCAAACAGGTGGA

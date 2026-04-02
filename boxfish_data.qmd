@@ -1,0 +1,2175 @@
+---
+title: "new boxfish script"
+format: html
+---
+
+```{r}
+library(ape)
+library(phangorn)
+library(tidyverse)
+library(ggtree)
+
+# ══════════════════════════════════════════════════════════════════════
+# 0. MASTER LOOKUP TABLES (defined once)
+# ══════════════════════════════════════════════════════════════════════
+
+taxonomy <- data.frame(
+  species_full = c(
+    "Anoplocapros amygdaloides", "Anoplocapros lenticularis", "Anoplocapros inermis",
+    "Strophiurichthys robustus", "Aracana aurita", "Aracana ornata",
+    "Capropygia unistriata", "Kentrocapros aculeatus", "Polyplacapros tyleri",
+    "Acanthostracion guineensis", "Acanthostracion notacanthus",
+    "Acanthostracion polygonius", "Acanthostracion quadricornis",
+    "Lactophrys bicaudalis", "Lactophrys trigonus", "Lactophrys triqueter",
+    "Lactoria cornuta", "Lactoria diaphana", "Lactoria fornasini", "Lactoria paschae",
+    "Ostracion cubicus", "Ostracion cyanurus", "Ostracion immaculatus",
+    "Ostracion meleagris", "Ostracion nasus", "Rhynchostracion rhinorhynchus",
+    "Ostracion solorensis", "Ostracion whitleyi",
+    "Tetrosomus concatenatus", "Tetrosomus gibbosus", "Ostracion reipublicae",
+    "Triodon macropterus"
+  ),
+  morpho_code = c(
+    NA, "Anoplocapros", NA,
+    "Strophiurichthys", "Aracana", NA,
+    "Capropygia", "Kentrocapros", "Polyplacapros",
+    "acant_guin", "acant_nota", "acant_poly", "acant_quad",
+    "lactp_bica", "lactp_trig", "lactp_triq",
+    "lacto_corn", "lacto_diap", "lacto_forn", NA,
+    "ostr_cubic", "ostr_cyanu", NA, "ostr_melea",
+    "ostr_nasus", "Ostr_rhino", NA, "ostr_whitl",
+    "tetr_conca", "tetr_gibbo", "tetr_repub",
+    "Triodon"
+  ),
+  mitogenome_accession = c(
+    NA, "NC_011319.1", NA,
+    NA, NA, NA, NA, "NC_009864.1", NA, NA, NA,
+    "PV662072.1", "PV662073.1",
+    "OP057014.1", "OP035078.2", NA,
+    "NC_057981.1", "NC_011330.1", NA, NA,
+    "NC_072284.1", NA, "NC_009865.1", "OP035246.1",
+    NA, "NC_030005.1", NA, NA, NA, NA, NA,
+    "NC_009859.1"
+  ),
+  ftol_name = c(
+    NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,
+    "Acanthostracion_polygonius", "Acanthostracion_quadricornis",
+    "Lactophrys_bicaudalis", "Lactophrys_trigonus", "Rhinesomus_triqueter",
+    "Lactoria_cornuta", "Lactoria_diaphana", "Tetrosomus_fornasini", NA,
+    "Ostracion_cubicus", NA, "Ostracion_immaculatus", "Ostracion_meleagris",
+    "Rhynchostracion_nasus", "Ostracion_rhinorhynchos",
+    "Ostracion_solorensis", "Ostracion_whitleyi",
+    "Tetrosomus_concatenatus", "Tetrosomus_gibbosus", "Tetrosomus_reipublicae",
+    "Triodon_macropterus"
+  ),
+  family = c(rep("Aracanidae", 9), rep("Ostraciidae", 22), "Triodontidae"),
+  stringsAsFactors = FALSE
+) |>
+  mutate(species_underscore = gsub(" ", "_", species_full))
+
+# Convenience named vectors for fast tip relabelling
+acc_to_species  <- setNames(taxonomy$species_full,  taxonomy$mitogenome_accession)
+code_to_species <- setNames(taxonomy$species_full,  taxonomy$morpho_code)
+acc_to_code     <- setNames(taxonomy$morpho_code,   taxonomy$mitogenome_accession)
+
+
+# ══════════════════════════════════════════════════════════════════════
+# 1. READ DATA (each file read once)
+# ══════════════════════════════════════════════════════════════════════
+
+morpho_raw <- read.nexus.data("~/Downloads/Boxfish/morpho/Ostracioidea_K95_WT83.nex")
+morpho_mat <- do.call(rbind, morpho_raw)
+
+dna_data <- read.dna(
+  "~/Downloads/Boxfish/muscle_results/muscle-I20260206-203642-0302-71998231-p1m.sqr.fa",
+  format = "fasta"
+)
+
+mol_aln <- read.dna(
+  "~/Downloads/Boxfish/boxfish-seqs/mitogenomes/all_mitogenomes_aligned.fasta",
+  format = "fasta"
+)
+rownames(mol_aln) <- gsub(" .*", "", rownames(mol_aln))   # strip to accession
+
+ostrax <- read.dna(
+  "~/Downloads/Boxfish/ftol/Ostraciidae.phylip",
+  format = "sequential"
+)
+
+# Extract Triodon from the full FToL alignment and append — save so we never
+# have to re-read the large file again
+ftol_full <- read.dna(
+  "~/Downloads/Boxfish/ftol/final_alignment.phylip",
+  format = "interleaved"
+)
+
+combined_aln <- rbind(ostrax, ftol_full[grep("Triodon_macropterus", rownames(ftol_full)), ])
+rownames(combined_aln)[nrow(combined_aln)] <- "Triodon_macropterus"
+
+write.dna(combined_aln,
+          file   = "~/Downloads/Boxfish/ftol/Ostraciidae_with_triodon.phylip",
+          format = "sequential",
+          colsep = "", nbcol = -1)
+
+rm(ftol_full)  # free memory — no longer needed
+cat("Saved Ostraciidae_with_triodon.phylip:", nrow(combined_aln), "taxa,",
+    ncol(combined_aln), "chars\n")
+
+
+# ══════════════════════════════════════════════════════════════════════
+# 2. MERGE DNA + LOOKUP
+# ══════════════════════════════════════════════════════════════════════
+
+dna_named <- as.data.frame(as.character(dna_data)) |>
+  rownames_to_column("ID") |>
+  left_join(taxonomy[, c("mitogenome_accession", "morpho_code")],
+            by = c("ID" = "mitogenome_accession")) |>
+  filter(!is.na(morpho_code)) |>
+  column_to_rownames("morpho_code") |>
+  select(-ID)
+
+unmatched <- rownames(as.character(dna_data))[!rownames(as.character(dna_data)) %in% taxonomy$mitogenome_accession]
+if (length(unmatched)) message("Unmatched IDs: ", paste(unmatched, collapse = ", "))
+
+shared_taxa    <- intersect(rownames(dna_named), rownames(morpho_mat))
+message(length(shared_taxa), " shared taxa found")
+combined_mat   <- cbind(morpho_mat[shared_taxa, ], dna_named[shared_taxa, ])
+
+
+# ══════════════════════════════════════════════════════════════════════
+# 3. SPLIT ALIGNMENT INTO LOCI
+# ══════════════════════════════════════════════════════════════════════
+
+aln <- read.dna("~/Downloads/Boxfish/ftol/Ostraciidae.phylip", format = "sequential")
+
+locus_ranges <- list(
+  # Mitochondrial
+  s12s      = 1:979,
+  s16s      = 980:1756,
+  coi       = 2292:2973,
+  cytb      = 2974:4114,
+  nd2       = 8822:9868,
+  nd4       = 9869:11401,
+  # Nuclear
+  s4c4      = 1757:2291,
+  enc1      = 4115:4954,
+  ficd      = 4955:5680,
+  glyt      = 5681:6613,
+  hoxc6a    = 6614:7243,
+  kiaa1239  = 7244:7987,
+  myh6      = 7988:8821,
+  panx2     = 11402:12141,
+  plagl2    = 12142:12951,
+  ptr       = 12952:13662,
+  rag1      = 13663:15116,
+  rag2      = 15117:16340,
+  rhodopsin = 16341:17264,
+  ripk4     = 17265:17909,
+  sh3px3    = 17910:18632,
+  sidkey    = 18633:19727,
+  sreb2     = 19728:20714,
+  svep1     = 20715:21521,
+  tbr1      = 21522:22349,
+  vcpip     = 22350:23114,
+  zic1      = 23115:24143
+)
+
+mito_loci    <- c("s12s","s16s","coi","cytb","nd2","nd4")
+nuclear_loci <- setdiff(names(locus_ranges), mito_loci)
+
+dir.create("~/Downloads/Boxfish/loci/mito",    recursive = TRUE, showWarnings = FALSE)
+dir.create("~/Downloads/Boxfish/loci/nuclear", recursive = TRUE, showWarnings = FALSE)
+
+for (nm in names(locus_ranges)) {
+  subdir <- if (nm %in% mito_loci) "~/Downloads/Boxfish/loci/mito" else "~/Downloads/Boxfish/loci/nuclear"
+  fname  <- file.path(subdir, paste0(nm, ".fa"))
+  write.dna(aln[, locus_ranges[[nm]]], fname, format = "fasta")
+}
+
+message("Done! ", ncol(aln), " total columns split into ", length(locus_ranges),
+        " loci across loci/mito/ and loci/nuclear/")
+
+
+# ══════════════════════════════════════════════════════════════════════
+# 4. MITOGENOME TREE — read, root, relabel, plot
+# ══════════════════════════════════════════════════════════════════════
+
+relabel_tips <- function(tree, lookup_vec) {
+  tree$tip.label <- lookup_vec[tree$tip.label]
+  tree
+}
+
+mito_tree <- read.tree("~/Downloads/Boxfish/trees/boxfish_mito_iqtree.treefile") |>
+  relabel_tips(acc_to_species) |>
+  (\(t) root(t, grep("Triodon", t$tip.label, value = TRUE), resolve.root = TRUE))()
+
+par(mar = c(1, 1, 2, 1))
+plot(mito_tree,
+     main = "Boxfish Mitogenome Phylogeny (GTR+G, 1000 bootstrap)",
+     cex = 0.8, label.offset = 0.005)
+nodelabels(mito_tree$node.label,
+           cex = 0.6, frame = "none", adj = c(1.2, -0.3), col = "blue")
+add.scale.bar()
+
+
+# ══════════════════════════════════════════════════════════════════════
+# 5. MORPHOLOGICAL PARSIMONY TREE
+# ══════════════════════════════════════════════════════════════════════
+
+morpho_phydat <- phyDat(morpho_mat, type = "USER", levels = c("0","1","2","3"))
+
+set.seed(42)
+morpho_mp <- pratchet(morpho_phydat, trace = 0, minit = 100, k = 10) |>
+  (\(t) root(t, "Aracana", resolve.root = TRUE))()
+
+
+# ══════════════════════════════════════════════════════════════════════
+# 6. PRUNE & COMPARE TREES (shared taxa)
+# ══════════════════════════════════════════════════════════════════════
+
+# Map mito accessions → morpho codes for the mito tree
+mito_tree_coded <- read.tree("~/Downloads/Boxfish/trees/boxfish_mito_iqtree.treefile")
+mito_tree_coded$tip.label <- acc_to_code[mito_tree_coded$tip.label]
+
+shared <- intersect(mito_tree_coded$tip.label, names(morpho_raw))
+cat("Shared taxa:", length(shared), "\n")
+
+mito_pruned   <- keep.tip(mito_tree_coded, shared)
+morpho_pruned <- keep.tip(morpho_mp, shared)
+
+par(mfrow = c(1, 2), mar = c(1, 1, 3, 1))
+plot(morpho_pruned, main = "Morphological Parsimony\n(shared taxa)", cex = 0.8)
+plot(mito_pruned,   main = "Mitogenome ML\n(shared taxa)",            cex = 0.8)
+
+# Save morpho tree with accession IDs for MrBayes
+morpho_renamed <- morpho_pruned
+morpho_renamed$tip.label <- taxonomy$mitogenome_accession[
+  match(morpho_renamed$tip.label, taxonomy$morpho_code)
+]
+write.tree(morpho_renamed, "~/Downloads/Boxfish/trees/morpho_topology.tre")
+
+
+# ══════════════════════════════════════════════════════════════════════
+# 7. BUILD TOTAL-EVIDENCE NEXUS FOR MRBAYES
+# ══════════════════════════════════════════════════════════════════════
+
+all_taxa     <- taxonomy$morpho_code
+n_mol_chars  <- ncol(mol_aln)
+n_morph_chars <- ncol(morpho_mat)
+
+# Molecular matrix — fill missing with "?"
+mol_combined <- matrix("?", nrow = nrow(taxonomy), ncol = n_mol_chars,
+                       dimnames = list(all_taxa, NULL))
+for (i in seq_len(nrow(taxonomy))) {
+  acc <- taxonomy$mitogenome_accession[i]
+  if (!is.na(acc) && acc %in% rownames(mol_aln))
+    mol_combined[i, ] <- as.character(mol_aln[acc, ])
+}
+
+# Morpho matrix — fill missing with "?"
+morpho_combined <- matrix("?", nrow = nrow(taxonomy), ncol = n_morph_chars,
+                           dimnames = list(all_taxa, NULL))
+for (i in seq_len(nrow(taxonomy))) {
+  code <- taxonomy$morpho_code[i]
+  if (!is.na(code) && code %in% names(morpho_raw))
+    morpho_combined[i, ] <- morpho_raw[[code]]
+}
+
+n_total     <- n_mol_chars + n_morph_chars
+outgrp_name <- all_taxa[grep("riodon", all_taxa, ignore.case = TRUE)]
+
+con <- file("~/Downloads/Boxfish/boxfish-seqs/mitogenomes/total_evidence.nex", "w")
+writeLines(c(
+  "#NEXUS", "",
+  "begin data;",
+  paste0("  dimensions ntax=", nrow(taxonomy), " nchar=", n_total, ";"),
+  paste0("  format datatype=mixed(dna:1-", n_mol_chars,
+         ", standard:", n_mol_chars + 1, "-", n_total,
+         ") interleave=no missing=? gap=-;"),
+  "  matrix"
+), con)
+
+for (i in seq_len(nrow(taxonomy))) {
+  writeLines(paste0("  ", all_taxa[i], "  ",
+                    paste(mol_combined[i,],    collapse = ""),
+                    paste(morpho_combined[i,], collapse = "")), con)
+}
+
+writeLines(c(
+  "  ;", "end;", "",
+  "begin mrbayes;",
+  "  set autoclose=yes nowarn=yes;", "",
+  paste0("  charset molecular = 1-", n_mol_chars, ";"),
+  paste0("  charset morpho = ", n_mol_chars + 1, "-", n_total, ";"),
+  "  partition totalevidence = 2: molecular, morpho;",
+  "  set partition = totalevidence;", "",
+  "  lset applyto=(1) nst=6 rates=gamma ngammacat=4;",
+  "  lset applyto=(2) nst=1 rates=gamma ngammacat=4 coding=variable;", "",
+  "  prset applyto=(1) statefreqpr=dirichlet(1,1,1,1);",
+  "  prset applyto=(2) symdirihyperpr=fixed(infinity);",
+  "  prset applyto=(all) ratepr=variable;", "",
+  "  unlink statefreq=(all) revmat=(all) shape=(all);", "",
+  paste0("  outgroup ", outgrp_name, ";"),
+  "  mcmc ngen=2000000 nchains=4 nruns=2",
+  "       samplefreq=500 printfreq=500",
+  "       savebrlens=yes filename=boxfish_total;",
+  "  sump burnin=500;",
+  "  sumt burnin=500;",
+  "end;"
+), con)
+close(con)
+
+cat("Total-evidence nexus written.\n")
+
+
+# ══════════════════════════════════════════════════════════════════════
+# 8. THREE-TREE COMPARISON PLOT
+# ══════════════════════════════════════════════════════════════════════
+
+nuclear_tree <- read.tree("~/Downloads/Boxfish/ftol/nuclear_iqtree.treefile") |>
+  (\(t) root(t, "Triodon_macropterus", resolve.root = TRUE))()
+nuclear_tree$tip.label <- gsub("_", " ", nuclear_tree$tip.label)
+
+morpho_tree <- read.tree("~/Downloads/Boxfish/trees/morpho_topology.tre") |>
+  relabel_tips(acc_to_species) |>
+  (\(t) root(t, "Kentrocapros aculeatus", resolve.root = TRUE))()
+
+par(mfrow = c(1, 3))
+plot(mito_tree,    main = "Mitogenome (IQ-TREE)",        cex = 0.7)
+nodelabels(mito_tree$node.label,    cex = 0.5, frame = "none", adj = c(1.2, -0.3))
+plot(nuclear_tree, main = "Nuclear loci (IQ-TREE)",      cex = 0.7)
+nodelabels(nuclear_tree$node.label, cex = 0.5, frame = "none", adj = c(1.2, -0.3))
+plot(morpho_tree,  main = "Morphology (Parsimony)",      cex = 0.7)
+
+
+# ══════════════════════════════════════════════════════════════════════
+# 10. DATA COVERAGE HEATMAP
+# ══════════════════════════════════════════════════════════════════════
+
+mito_species    <- na.omit(taxonomy$species_full[!is.na(taxonomy$mitogenome_accession)])
+ftol_species    <- gsub("_", " ", na.omit(taxonomy$ftol_name))
+morpho_species  <- na.omit(taxonomy$species_full[!is.na(taxonomy$morpho_code)])
+target_species  <- taxonomy$species_full
+
+coverage <- taxonomy |>
+  transmute(
+    Species      = species_full,
+    Mitogenome   = species_full %in% mito_species,
+    FToL_nuclear = species_full %in% ftol_species,
+    Morphology   = species_full %in% morpho_species
+  )
+
+coverage |>
+  pivot_longer(-Species, names_to = "Data_type", values_to = "Present") |>
+  mutate(
+    Data_type = factor(Data_type, levels = c("Mitogenome","FToL_nuclear","Morphology")),
+    Species   = factor(Species, levels = rev(target_species))
+  ) |>
+  ggplot(aes(x = Data_type, y = Species, fill = Present)) +
+  geom_tile(color = "white", linewidth = 0.5) +
+  scale_fill_manual(values = c("TRUE" = "#2d6a4f", "FALSE" = "#f0f0f0"),
+                    labels  = c("TRUE" = "Present", "FALSE" = "Absent")) +
+  labs(title = "Data coverage across taxa", x = "", y = "", fill = "") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(face = "italic", size = 8))
+
+
+# ══════════════════════════════════════════════════════════════════════
+# 9. NCBI COVERAGE HEATMAP (load pre-computed results)
+# ══════════════════════════════════════════════════════════════════════
+
+# Previously saved by the rentrez search — no need to re-run
+coverage_ncbi <- read.csv("~/Downloads/Boxfish/ncbi_coverage.csv",
+                           stringsAsFactors = FALSE)
+
+locus_order <- c(
+  "COI","cytb","16S","12S","ND2","ND4","ND1","ND3","ND4L","ND5","ND6",
+  "COX2","COX3","ATP6","ATP8",
+  "4c4","enc1","ficd","glyt","hoxc6a","kiaa1239","myh6","panx2","plagl2",
+  "ptr","rag1","rag2","rhodopsin","ripk4","sh3px3","sidkey","sreb2",
+  "svep1","tbr1","vcpip","zic1"
+)
+
+coverage_ncbi |>
+  mutate(
+    locus   = factor(locus,   levels = locus_order),
+    species = factor(species, levels = rev(target_species))
+  ) |>
+  ggplot(aes(x = locus, y = species, fill = found)) +
+  geom_tile(color = "white", linewidth = 0.5) +
+  scale_fill_manual(values = c("TRUE" = "#2d6a4f", "FALSE" = "#f0f0f0"),
+                    labels  = c("TRUE" = "Present", "FALSE" = "Absent")) +
+  labs(title = "NCBI data availability across taxa and loci",
+       x = "", y = "", fill = "") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7),
+        axis.text.y = element_text(face = "italic", size = 8))
+
+```
+```{r}
+# ══════════════════════════════════════════════════════════════════════
+# 10. DATA COVERAGE BY SOURCE HEATMAP
+# ══════════════════════════════════════════════════════════════════════
+ 
+# For each species × locus, determine the best available source:
+# Mitogenome > FToL > NCBI only > Missing
+ 
+mito_locus_names <- c("COI","cytb","16S","12S","ND2","ND4",
+                       "ND1","ND3","ND4L","ND5","ND6","COX2","COX3","ATP6","ATP8")
+ftol_locus_names <- c("COI","cytb","16S","12S","ND2","ND4",
+                       "4c4","enc1","ficd","glyt","hoxc6a","kiaa1239","myh6","panx2",
+                       "plagl2","ptr","rag1","rag2","rhodopsin","ripk4","sh3px3",
+                       "sidkey","sreb2","svep1","tbr1","vcpip","zic1")
+ 
+ftol_taxa_species <- gsub("_", " ", rownames(ostrax))
+mito_taxa_species <- na.omit(taxonomy$species_full[!is.na(taxonomy$mitogenome_accession)])
+ 
+coverage_source <- coverage_ncbi |>
+  mutate(
+    has_mitogenome = species %in% mito_taxa_species & locus %in% mito_locus_names,
+    has_ftol       = species %in% ftol_taxa_species & locus %in% ftol_locus_names,
+    source = case_when(
+      has_mitogenome ~ "Mitogenome",
+      has_ftol       ~ "FToL",
+      found          ~ "NCBI only",
+      TRUE           ~ "Missing"
+    ),
+    source = factor(source, levels = c("Mitogenome", "FToL", "NCBI only", "Missing"))
+  )
+ 
+locus_type <- data.frame(
+  locus = locus_order,
+  type  = c(rep("mtDNA", 15), rep("nuDNA", 21)),
+  stringsAsFactors = FALSE
+)
+ 
+coverage_source |>
+  left_join(locus_type, by = "locus") |>
+  mutate(
+    locus   = factor(locus,   levels = locus_order),
+    species = factor(species, levels = rev(target_species)),
+    type    = factor(type,    levels = c("mtDNA", "nuDNA"))
+  ) |>
+  ggplot(aes(x = locus, y = species, fill = source)) +
+  geom_tile(color = "white", linewidth = 0.5) +
+  scale_fill_manual(
+    values = c(
+      "Mitogenome" = "#2d6a4f",
+      "FToL"       = "#52b788",
+      "NCBI only"  = "#f4a261",
+      "Missing"    = "#f0f0f0"
+    )
+  ) +
+  facet_grid(. ~ type, scales = "free_x", space = "free_x") +
+  labs(title = "Data coverage by source", x = "", y = "", fill = "Source") +
+  theme_minimal() +
+  theme(axis.text.x  = element_text(angle = 45, hjust = 1, size = 7),
+        axis.text.y  = element_text(face = "italic", size = 8),
+        strip.text   = element_text(face = "bold"))
+ 
+```
+```{r}
+# ══════════════════════════════════════════════════════════════════════
+# 10. DATA COVERAGE BY SOURCE HEATMAP + COUNTS
+# ══════════════════════════════════════════════════════════════════════
+
+mito_locus_names <- c("COI","cytb","16S","12S","ND2","ND4",
+                       "ND1","ND3","ND4L","ND5","ND6","COX2","COX3","ATP6","ATP8")
+ftol_locus_names <- c("COI","cytb","16S","12S","ND2","ND4",
+                       "4c4","enc1","ficd","glyt","hoxc6a","kiaa1239","myh6","panx2",
+                       "plagl2","ptr","rag1","rag2","rhodopsin","ripk4","sh3px3",
+                       "sidkey","sreb2","svep1","tbr1","vcpip","zic1")
+
+ftol_taxa_species <- gsub("_", " ", rownames(ostrax))
+mito_taxa_species <- na.omit(taxonomy$species_full[!is.na(taxonomy$mitogenome_accession)])
+
+locus_type <- data.frame(
+  locus = locus_order,
+  type  = c(rep("mtDNA", 15), rep("nuDNA", 21)),
+  stringsAsFactors = FALSE
+)
+
+coverage_source <- coverage_ncbi |>
+  mutate(
+    has_mitogenome = species %in% mito_taxa_species & locus %in% mito_locus_names,
+    has_ftol       = species %in% ftol_taxa_species & locus %in% ftol_locus_names,
+    source = case_when(
+      has_mitogenome ~ "Mitogenome",
+      has_ftol       ~ "FToL",
+      found          ~ "NCBI only",
+      TRUE           ~ "Missing"
+    ),
+    source = factor(source, levels = c("Mitogenome", "FToL", "NCBI only", "Missing"))
+  )
+
+# Count taxa per locus (non-missing)
+locus_counts <- coverage_source |>
+  filter(source != "Missing") |>
+  count(locus, name = "n_taxa")
+
+coverage_source |>
+  left_join(locus_type, by = "locus") |>
+  left_join(locus_counts, by = "locus") |>
+  mutate(
+    locus_label = paste0(locus, "\n(n=", n_taxa, ")"),
+    # preserve ordering
+    locus_label = factor(locus_label, 
+                         levels = unique(locus_label[order(match(locus, locus_order))])),
+    species = factor(species, levels = rev(target_species)),
+    type    = factor(type,    levels = c("mtDNA", "nuDNA"))
+  ) |>
+  ggplot(aes(x = locus_label, y = species, fill = source)) +
+  geom_tile(color = "white", linewidth = 0.5) +
+  scale_fill_manual(
+    values = c(
+      "Mitogenome" = "#2d6a4f",
+      "FToL"       = "#52b788",
+      "NCBI only"  = "#f4a261",
+      "Missing"    = "#f0f0f0"
+    )
+  ) +
+  facet_grid(. ~ type, scales = "free_x", space = "free_x") +
+  labs(title = "Data coverage by source", x = "", y = "", fill = "Source") +
+  theme_minimal() +
+  theme(axis.text.x  = element_text(angle = 45, hjust = 1, size = 7),
+        axis.text.y  = element_text(face = "italic", size = 8),
+        strip.text   = element_text(face = "bold"))
+```
+
+```{r}
+library(rentrez)
+library(ape)
+library(tidyverse)
+
+# ══════════════════════════════════════════════════════════════════════
+# PULL NCBI SEQUENCES INTO PER-LOCUS FASTAS
+# ══════════════════════════════════════════════════════════════════════
+
+coverage_ncbi <- read.csv("~/Downloads/Boxfish/ncbi_coverage.csv",
+                           stringsAsFactors = FALSE)
+
+# Only rows where we found something and have an accession
+to_download <- coverage_ncbi |>
+  filter(found == TRUE, !is.na(accession))
+
+# Helper: fetch one accession and return as named char string
+fetch_seq <- function(accession, species, delay = 0.34) {
+  result <- tryCatch(
+    entrez_fetch(db = "nucleotide", id = accession,
+                 rettype = "fasta", retmode = "text"),
+    error = function(e) NULL
+  )
+  Sys.sleep(delay)
+  if (is.null(result)) return(NULL)
+
+  # Replace the NCBI header with a clean species name
+  clean_name <- gsub(" ", "_", species)
+  sub(">\\S+[^\n]*", paste0(">", clean_name), result)
+}
+
+# Download and write per locus
+loci <- unique(to_download$locus)
+cat("Downloading sequences for", nrow(to_download), "species × locus combinations\n")
+
+for (loc in loci) {
+
+  rows <- to_download[to_download$locus == loc, ]
+
+  seqs <- mapply(fetch_seq,
+                 accession = rows$accession,
+                 species   = rows$species,
+                 SIMPLIFY  = FALSE)
+  seqs <- Filter(Negate(is.null), seqs)
+
+  if (length(seqs) == 0) next
+
+  # Determine output directory
+  mito_loci <- c("COI","cytb","16S","12S","ND2","ND4",
+                  "ND1","ND3","ND4L","ND5","ND6","COX2","COX3","ATP6","ATP8")
+  subdir <- if (loc %in% mito_loci) {
+    "~/Downloads/Boxfish/loci/mito"
+  } else {
+    "~/Downloads/Boxfish/loci/nuclear"
+  }
+  dir.create(subdir, recursive = TRUE, showWarnings = FALSE)
+
+  outfile <- file.path(subdir, paste0(tolower(loc), "_ncbi.fa"))
+  writeLines(unlist(seqs), outfile)
+  cat("Wrote", length(seqs), "sequences →", outfile, "\n")
+}
+
+cat("Done.\n")
+coverage_ncbi |> filter(locus == "COI", species %in% c("Triodon macropterus", "Rhynchostracion rhinorhynchus"))
+
+coverage_source |>
+  filter(locus == "12S", source != "Missing") |>
+  pull(species)
+
+coverage_ncbi |>
+  filter(locus == "12S", species %in% c("Rhynchostracion rhinorhynchus", "Ostracion solorensis"))
+
+"Ostracion solorensis" %in% ftol_taxa_species
+rownames(ostrax)[grep("solorens", rownames(ostrax), ignore.case = TRUE)]
+```
+the goal I'm imagining is 1 file per locus with all the taxon. if there's no data, include a header anyway and sequence after. for each locus prioritize data by length/completeness: mitogenome is always gonna be the longest and then fill in with NCBI loci or FTOL whichever is available and longest/most complete. In addition, I want to include info in the header about WHERE the sequence came from: mitogenome, ncbi, or ftol as well as the accession #. But first, we need to synonymize Rhynchostracion rhinorhynchus with Ostracion rhinorhynchos. the full list of taxa is this:
+
+Anoplocapros amygdaloides
+Anoplocapros lenticularis
+Anoplocapros inermis
+Stropiurichthys robustus
+Aracana aurita
+Aracana ornata
+Capropygia unistriata
+Kentrocapros aculeatus
+Polyplacapros tyleri
+Acanthostracion guineensis
+Acanthostracion notacanthus
+Acanthostracion polygonius
+Acanthostracion quadricornis
+Lactophrys bicaudalis
+Lactophrys trigonus
+Lactophrys triqueter
+lactoria cornuta
+Lactoria diaphana
+Lactoria fornasini
+Lactoria paschae
+Ostracion cubicus
+Ostracion cyanurus
+Ostracion immaculatus
+Ostracion meleagris
+Ostracion nasus
+Rhynchostracion rhinorhynchus
+Ostracion solorensis
+Ostracion whitleyi
+Tetrosomus concatenatus
+Tetrosomus gibbosus
+Ostracion reipublicae
+Triodon macropterus
+```{r}
+# ══════════════════════════════════════════════════════════════════════
+# MERGE PER-LOCUS FASTAS WITH SOURCE PRIORITY + RICH HEADERS
+# ══════════════════════════════════════════════════════════════════════
+
+library(ape)
+library(tidyverse)
+
+canonical_taxa <- c(
+  "Anoplocapros amygdaloides", "Anoplocapros lenticularis", "Anoplocapros inermis",
+  "Strophiurichthys robustus", "Aracana aurita", "Aracana ornata",
+  "Capropygia unistriata", "Kentrocapros aculeatus", "Polyplacapros tyleri",
+  "Acanthostracion guineensis", "Acanthostracion notacanthus",
+  "Acanthostracion polygonius", "Acanthostracion quadricornis",
+  "Lactophrys bicaudalis", "Lactophrys trigonus", "Lactophrys triqueter",
+  "Lactoria cornuta", "Lactoria diaphana", "Lactoria fornasini", "Lactoria paschae",
+  "Ostracion cubicus", "Ostracion cyanurus", "Ostracion immaculatus",
+  "Ostracion meleagris", "Ostracion nasus", "Rhynchostracion rhinorhynchus",
+  "Ostracion solorensis", "Ostracion whitleyi",
+  "Tetrosomus concatenatus", "Tetrosomus gibbosus", "Ostracion reipublicae",
+  "Triodon macropterus"
+)
+
+synonyms <- c(
+  "Ostracion rhinorhynchos"   = "Rhynchostracion rhinorhynchus",
+  "Ostracion rhinorhynchus"   = "Rhynchostracion rhinorhynchus",
+  "Strophiurichthys robustus" = "Anoplocapros inermis",
+  "Tetrosomus reipublicae"    = "Ostracion reipublicae",
+  "Lactoria paschae"          = "Lactoria diaphana",
+  "Acanthostracion guineense" = "Acanthostracion guineensis",
+  "Rhinesomus triqueter"      = "Lactophrys triqueter",
+  "Tetrosomus fornasini"      = "Lactoria fornasini"
+)
+
+canonicalize <- function(name) {
+  name <- trimws(gsub("_", " ", name))
+  ifelse(name %in% names(synonyms), synonyms[name], name)
+}
+
+# Strip alignment gaps and return named list of raw sequences
+read_fasta_list <- function(path) {
+  if (!file.exists(path)) return(list())
+  lines <- readLines(path)
+  idx   <- which(startsWith(lines, ">"))
+  mapply(function(s, e) {
+    paste(gsub("-", "", lines[s:e]), collapse = "")
+  },
+  idx + 1,
+  c(idx[-1] - 1, length(lines)),
+  SIMPLIFY = FALSE) |>
+    setNames(sub("^>", "", lines[idx]))
+}
+
+mito_loci_names    <- c("COI","cytb","16S","12S","ND2","ND4",
+                         "ND1","ND3","ND4L","ND5","ND6","COX2","COX3","ATP6","ATP8")
+nuclear_loci_names <- c("4c4","enc1","ficd","glyt","hoxc6a","kiaa1239","myh6","panx2",
+                         "plagl2","ptr","rag1","rag2","rhodopsin","ripk4","sh3px3",
+                         "sidkey","sreb2","svep1","tbr1","vcpip","zic1")
+all_loci <- c(mito_loci_names, nuclear_loci_names)
+
+# ncbi accession lookup per species × locus
+ncbi_acc <- coverage_ncbi |>
+  filter(found == TRUE) |>
+  mutate(species = canonicalize(species)) |>
+  select(species, locus, accession)
+
+# ftol accession lookup — use ftol_name from taxonomy as the accession label
+ftol_acc <- taxonomy |>
+  filter(!is.na(ftol_name)) |>
+  select(species_full, ftol_name) |>
+  deframe()  # named vector: species_full -> ftol_name
+
+dir.create("~/Downloads/Boxfish/loci/merged/mito",    recursive = TRUE, showWarnings = FALSE)
+dir.create("~/Downloads/Boxfish/loci/merged/nuclear", recursive = TRUE, showWarnings = FALSE)
+
+for (loc in all_loci) {
+
+  is_mito <- loc %in% mito_loci_names
+  subdir  <- if (is_mito) "~/Downloads/Boxfish/loci/merged/mito" else
+                           "~/Downloads/Boxfish/loci/merged/nuclear"
+
+  # File name convention: lowercase locus
+  loc_lower <- tolower(loc)
+
+  # Read FToL sequences (gap-stripped)
+  ftol_path <- file.path(
+    if (is_mito) "~/Downloads/Boxfish/loci/mito" else "~/Downloads/Boxfish/loci/nuclear",
+    paste0(loc_lower, ".fa")
+  )
+  ftol_seqs <- read_fasta_list(ftol_path)
+  names(ftol_seqs) <- canonicalize(names(ftol_seqs))
+
+  # Read NCBI sequences (gap-stripped)
+  ncbi_path <- file.path(
+    if (is_mito) "~/Downloads/Boxfish/loci/mito" else "~/Downloads/Boxfish/loci/nuclear",
+    paste0(loc_lower, "_ncbi.fa")
+  )
+  ncbi_seqs <- read_fasta_list(ncbi_path)
+  names(ncbi_seqs) <- canonicalize(names(ncbi_seqs))
+
+  # Build one entry per canonical taxon
+  out_lines <- c()
+
+  for (sp in canonical_taxa) {
+
+    sp_under <- gsub(" ", "_", sp)
+
+    # Collect all available sequences with source labels
+    candidates <- list()
+
+    if (sp %in% names(ftol_seqs) && nchar(ftol_seqs[[sp]]) > 0) {
+      acc <- if (!is.na(ftol_acc[sp])) ftol_acc[sp] else "FToL"
+      candidates[["FToL"]] <- list(seq = ftol_seqs[[sp]],
+                                    acc = acc,
+                                    len = nchar(ftol_seqs[[sp]]))
+    }
+
+    if (sp %in% names(ncbi_seqs) && nchar(ncbi_seqs[[sp]]) > 0) {
+      acc <- ncbi_acc$accession[ncbi_acc$species == sp & ncbi_acc$locus == loc]
+      acc <- if (length(acc) > 0) acc[1] else "NCBI"
+      candidates[["NCBI"]] <- list(seq = ncbi_seqs[[sp]],
+                                    acc = acc,
+                                    len = nchar(ncbi_seqs[[sp]]))
+    }
+
+    if (length(candidates) == 0) {
+      # No data — write empty entry
+      out_lines <- c(out_lines,
+                     paste0(">", sp_under, " [source=MISSING] [accession=NA]"),
+                     "")
+      next
+    }
+
+    # Pick longest sequence
+    best_source <- names(which.max(sapply(candidates, `[[`, "len")))
+    best        <- candidates[[best_source]]
+
+    header <- paste0(">", sp_under,
+                     " [source=", best_source, "]",
+                     " [accession=", best$acc, "]",
+                     " [len=", best$len, "]")
+    out_lines <- c(out_lines, header, best$seq)
+  }
+
+  outfile <- file.path(subdir, paste0(loc_lower, ".fa"))
+  writeLines(out_lines, outfile)
+  n_present <- sum(sapply(canonical_taxa, function(sp) {
+    any(grepl(paste0(">", gsub(" ", "_", sp), " \\[source=(?!MISSING)"), out_lines, perl = TRUE))
+  }))
+  cat(sprintf("%-12s %d/%d taxa\n", loc, n_present, length(canonical_taxa)))
+}
+
+cat("\nDone. Merged fastas in ~/Downloads/Boxfish/loci/merged/\n")
+```
+look at reference mitogenome: O immaculatus .gb pull out coordinates picking the longest
+```{r}
+# Gene coordinates from NC_009865.1 (Ostracion immaculatus reference)
+ref_coords <- data.frame(
+  locus = c("12S","16S","ND1","ND2","COI","COX2","ATP8","ATP6",
+            "COX3","ND3","ND4L","ND4","ND5","ND6","cytb"),
+  start = c(69, 1090, 2854, 4043, 5480, 7185, 7952, 8110,
+            8793, 9650, 10069, 10359, 11954, 13789, 14385),
+  end   = c(1017, 2781, 3828, 5088, 7030, 7875, 8119, 8792,
+            9577, 9998, 10365, 11739, 13792, 14310, 15525),
+  strand = c("+","+","+","+","+","+","+","+",
+             "+","+","+","+","+","-","+"),
+  stringsAsFactors = FALSE
+)
+```
+
+
+take the ref coordinates for each locus above from O. immaculatus and run through each mitogenome
+
+```{r}
+library(ape)
+library(tidyverse)
+library(Biostrings)
+
+maf_dir <- "~/Downloads/Boxfish/lastz_out"
+rev_comp <- function(seq) {
+  comp <- chartr("ACGTacgt", "TGCAtgca", seq)
+  paste(rev(strsplit(comp, "")[[1]]), collapse = "")
+}
+
+# Parse a MAF file and return a data frame of alignment blocks
+parse_maf <- function(filepath) {
+  lines   <- readLines(filepath)
+  a_lines <- which(startsWith(lines, "a "))
+  
+  blocks <- lapply(a_lines, function(i) {
+    s_lines <- lines[(i+1):(i+2)]
+    s_lines <- s_lines[startsWith(s_lines, "s ")]
+    if (length(s_lines) < 2) return(NULL)
+    
+    parse_s <- function(l) {
+      p <- strsplit(trimws(l), "\\s+")[[1]]
+      list(src    = p[2],
+           start  = as.integer(p[3]),  # 0-based
+           size   = as.integer(p[4]),
+           strand = p[5],
+           srclen = as.integer(p[6]),
+           seq    = p[7])
+    }
+    list(ref   = parse_s(s_lines[1]),
+         query = parse_s(s_lines[2]))
+  })
+  Filter(Negate(is.null), blocks)
+}
+
+# Extract a locus sequence from MAF blocks given ref coordinates (1-based)
+extract_locus_from_maf <- function(blocks, ref_start, ref_end, strand) {
+  # find block(s) overlapping the locus
+  seq_parts <- c()
+  
+  for (b in blocks) {
+    r <- b$ref
+    # MAF is 0-based half-open
+    blk_start <- r$start + 1        # convert to 1-based
+    blk_end   <- r$start + r$size
+    
+    if (blk_end < ref_start || blk_start > ref_end) next
+    
+    # Overlap region in reference coordinates
+    ov_start <- max(ref_start, blk_start)
+    ov_end   <- min(ref_end,   blk_end)
+    
+    # Map to alignment column positions
+    ref_seq <- strsplit(r$seq, "")[[1]]
+    qry_seq <- strsplit(b$query$seq, "")[[1]]
+    
+    # Walk ref sequence to find columns corresponding to overlap
+    ref_pos  <- blk_start - 1
+    col_keep <- c()
+    for (col in seq_along(ref_seq)) {
+      if (ref_seq[col] != "-") {
+        ref_pos <- ref_pos + 1
+        if (ref_pos >= ov_start && ref_pos <= ov_end) {
+          col_keep <- c(col_keep, col)
+        }
+      }
+    }
+    seq_parts <- c(seq_parts, qry_seq[col_keep])
+  }
+  
+  if (length(seq_parts) == 0) return(NULL)
+  seq_out <- paste(seq_parts[seq_parts != "-"], collapse = "")
+  
+  # Reverse complement if on minus strand
+  if (strand == "-") {
+    seq_out <- rev_comp(seq_out)
+  }
+  seq_out
+}
+
+# Species name from MAF filename
+maf_to_species <- function(fname) {
+  sp <- gsub("_vs_ref\\.maf$", "", basename(fname))
+  sp <- gsub("_mitogenome.*", "", sp)
+  sp <- gsub("_", " ", sp)
+  # remove accession suffix (last word if it looks like an accession)
+  sp <- gsub("\\s+[A-Z0-9_.]+$", "", sp)
+  trimws(sp)
+}
+
+# Run extraction for all mitogenomes × all loci
+maf_files <- list.files(maf_dir, pattern = "\\.maf$", full.names = TRUE)
+
+dir.create("~/Downloads/Boxfish/loci/mito_extracted", showWarnings = FALSE)
+
+for (loc in ref_coords$locus) {
+  coords <- ref_coords[ref_coords$locus == loc, ]
+  out_lines <- c()
+  
+  for (maf_file in maf_files) {
+    sp      <- maf_to_species(maf_file)
+    sp_can  <- canonicalize(sp)
+    blocks  <- parse_maf(maf_file)
+    
+    if (length(blocks) == 0) next
+    
+    seq_out <- extract_locus_from_maf(blocks,
+                                       coords$start,
+                                       coords$end,
+                                       coords$strand)
+    if (is.null(seq_out) || nchar(seq_out) == 0) next
+    
+    sp_under <- gsub(" ", "_", sp_can)
+    out_lines <- c(out_lines,
+                   paste0(">", sp_under,
+                          " [source=Mitogenome]",
+                          " [accession=", gsub(".*_([A-Z0-9_.]+)\\.maf", "\\1",
+                                               basename(maf_file)), "]",
+                          " [len=", nchar(seq_out), "]"),
+                   seq_out)
+  }
+  
+  if (length(out_lines) > 0) {
+    outfile <- paste0("~/Downloads/Boxfish/loci/mito_extracted/",
+                      tolower(loc), "_mito.fa")
+    writeLines(out_lines, outfile)
+    cat(sprintf("%-8s %d sequences extracted\n",
+                loc, sum(startsWith(out_lines, ">"))))
+  }
+}
+
+cat("Done. Extracted loci in ~/Downloads/Boxfish/loci/mito_extracted/\n")
+```
+
+
+
+```{r}
+rev_comp <- function(seq) {
+  comp <- chartr("ACGTacgt", "TGCAtgca", seq)
+  paste(rev(strsplit(comp, "")[[1]]), collapse = "")
+}
+
+parse_maf <- function(filepath) {
+  lines   <- readLines(filepath)
+  a_lines <- which(startsWith(lines, "a "))
+  blocks  <- lapply(a_lines, function(i) {
+    # collect the two s-lines after this a-line
+    s_idx <- which(startsWith(lines[(i+1):min(i+10, length(lines))], "s "))
+    if (length(s_idx) < 2) return(NULL)
+    s_idx <- s_idx + i  # absolute indices
+    parse_s <- function(l) {
+      p <- strsplit(trimws(l), "\\s+")[[1]]
+      list(start  = as.integer(p[3]),   # 0-based
+           size   = as.integer(p[4]),
+           strand = p[5],
+           srclen = as.integer(p[6]),
+           seq    = p[7])
+    }
+    list(ref   = parse_s(lines[s_idx[1]]),
+         query = parse_s(lines[s_idx[2]]))
+  })
+  Filter(Negate(is.null), blocks)
+}
+
+extract_locus_from_maf <- function(blocks, locus_start, locus_end, strand) {
+  # locus_start and locus_end are 1-based coordinates on the reference
+  collected <- c()
+
+  for (b in blocks) {
+    r <- b$ref
+    q <- b$query
+
+    # MAF start is 0-based — convert to 1-based
+    blk_start_1 <- r$start + 1
+    blk_end_1   <- r$start + r$size   # last ref base in this block (1-based)
+
+    # Skip blocks that don't overlap the locus at all
+    if (blk_end_1 < locus_start || blk_start_1 > locus_end) next
+
+    # Overlap in 1-based ref coordinates
+    ov_start <- max(locus_start, blk_start_1)
+    ov_end   <- min(locus_end,   blk_end_1)
+
+    ref_chars <- strsplit(r$seq, "")[[1]]
+    qry_chars <- strsplit(q$seq, "")[[1]]
+
+    # Walk column by column
+    # ref_pos tracks current 1-based position in the reference (gaps don't advance it)
+    ref_pos <- blk_start_1 - 1  # will be incremented before use
+
+    for (col in seq_along(ref_chars)) {
+      if (ref_chars[col] != "-") {
+        ref_pos <- ref_pos + 1
+        if (ref_pos >= ov_start && ref_pos <= ov_end) {
+          # Only keep query base if it's not a gap
+          if (qry_chars[col] != "-") {
+            collected <- c(collected, qry_chars[col])
+          }
+        }
+        # Past the locus — no need to keep walking
+        if (ref_pos > ov_end) break
+      }
+    }
+  }
+
+  if (length(collected) == 0) return(NULL)
+
+  seq_out <- paste(collected, collapse = "")
+
+  if (strand == "-") seq_out <- rev_comp(seq_out)
+
+  seq_out
+}
+
+# Gene coordinates from NC_009865.1
+ref_coords <- data.frame(
+  locus  = c("12S","16S","ND1","ND2","COI","COX2","ATP8","ATP6",
+             "COX3","ND3","ND4L","ND4","ND5","ND6","cytb"),
+  start  = c(69,   1090, 2854, 4043, 5480, 7185, 7952, 8110,
+             8793, 9650, 10069,10359,11954,13789,14385),
+  end    = c(1017, 2781, 3828, 5088, 7030, 7875, 8119, 8792,
+             9577, 9998, 10365,11739,13792,14310,15525),
+  strand = c("+","+","+","+","+","+","+","+",
+             "+","+","+","+","+","-","+"),
+  stringsAsFactors = FALSE
+)
+
+maf_dir <- "~/Downloads/Boxfish/lastz_out"
+
+dir.create("~/Downloads/Boxfish/loci/mito_extracted",
+           recursive = TRUE, showWarnings = FALSE)
+
+for (loc in ref_coords$locus) {
+
+  coords    <- ref_coords[ref_coords$locus == loc, ]
+  maf_files <- list.files(maf_dir, pattern = "\\.maf$", full.names = TRUE)
+  out_lines <- c()
+
+  for (maf_file in maf_files) {
+
+    # Extract accession from filename
+    acc <- gsub(".*_([A-Z][A-Z0-9_\\.]+)\\.maf$", "\\1", basename(maf_file))
+
+    # Get canonical species name from taxonomy
+    sp <- taxonomy$species_full[
+      !is.na(taxonomy$mitogenome_accession) &
+      grepl(acc, taxonomy$mitogenome_accession, fixed = TRUE)
+    ]
+    if (length(sp) == 0) sp <- gsub("_vs_ref.*", "",
+                                     gsub("_mitogenome.*", "",
+                                          basename(maf_file)))
+    sp      <- canonicalize(gsub("_", " ", sp[1]))
+    sp_under <- gsub(" ", "_", sp)
+
+    blocks  <- parse_maf(maf_file)
+    if (length(blocks) == 0) {
+      cat(sprintf("  WARNING: no blocks in %s\n", basename(maf_file)))
+      next
+    }
+
+    seq_out <- extract_locus_from_maf(blocks,
+                                       coords$start,
+                                       coords$end,
+                                       coords$strand)
+
+    if (is.null(seq_out) || nchar(seq_out) == 0) {
+      cat(sprintf("  WARNING: no sequence extracted for %s %s\n", sp, loc))
+      next
+    }
+
+    out_lines <- c(out_lines,
+                   paste0(">", sp_under,
+                          " [source=Mitogenome]",
+                          " [accession=", acc, "]",
+                          " [len=", nchar(seq_out), "]"),
+                   seq_out)
+  }
+
+  if (length(out_lines) > 0) {
+    outfile <- paste0("~/Downloads/Boxfish/loci/mito_extracted/",
+                      tolower(loc), "_mito.fa")
+    writeLines(out_lines, outfile)
+    n <- sum(startsWith(out_lines, ">"))
+    cat(sprintf("%-8s %d sequences  lengths: %s\n",
+                loc, n,
+                paste(regmatches(out_lines[startsWith(out_lines, ">")],
+                                 regexpr("(?<=\\[len=)\\d+", 
+                                         out_lines[startsWith(out_lines, ">")],
+                                         perl = TRUE)),
+                      collapse = ", ")))
+  }
+}
+
+cat("\nDone. Check lengths above — should match expected gene lengths.\n")
+```
+
+take data from mitogenomes, ftol, and ncbi and merge them picking the longest
+
+```{r}
+# ══════════════════════════════════════════════════════════════════════
+# MERGE PER-LOCUS FASTAS: MITO EXTRACTED + FTOL + NCBI
+# Priority: Mitogenome always first, then FToL vs NCBI whichever longer
+# ══════════════════════════════════════════════════════════════════════
+
+for (loc in all_loci) {
+
+  is_mito   <- loc %in% mito_loci_names
+  subdir    <- if (is_mito) "~/Downloads/Boxfish/loci/merged/mito" else
+                             "~/Downloads/Boxfish/loci/merged/nuclear"
+  loc_lower <- tolower(loc)
+
+  # ── 1. Read mitogenome extracted ────────────────────────────────────
+  mito_ext_seqs <- list()
+  mito_ext_acc  <- list()
+
+  if (is_mito) {
+    mito_ext_path <- paste0("~/Downloads/Boxfish/loci/mito_extracted/",
+                             loc_lower, "_mito.fa")
+    if (file.exists(mito_ext_path)) {
+      raw_lines <- readLines(mito_ext_path)
+      idx <- which(startsWith(raw_lines, ">"))
+      for (i in seq_along(idx)) {
+        header  <- sub("^>", "", raw_lines[idx[i]])
+        seq_end <- if (i < length(idx)) idx[i+1] - 1 else length(raw_lines)
+        seq     <- paste(raw_lines[(idx[i]+1):seq_end], collapse = "")
+        sp_can  <- canonicalize(sub(" \\[.*", "", header))
+        mito_ext_seqs[[sp_can]] <- seq
+        mito_ext_acc[[sp_can]]  <- parse_header_accession(header)
+      }
+    }
+  }
+
+  # ── 2. Read FToL (gap-stripped) ─────────────────────────────────────
+  ftol_path <- file.path(
+    if (is_mito) "~/Downloads/Boxfish/loci/ftol_mito" else
+                 "~/Downloads/Boxfish/loci/ftol_nuclear",
+    paste0(loc_lower, ".fa")
+  )
+  ftol_seqs <- read_fasta_list(ftol_path)
+  names(ftol_seqs) <- canonicalize(names(ftol_seqs))
+
+  # ── 3. Read NCBI ─────────────────────────────────────────────────────
+  ncbi_path <- file.path(
+    if (is_mito) "~/Downloads/Boxfish/loci/ncbi_mito" else
+                 "~/Downloads/Boxfish/loci/ncbi_nuclear",
+    paste0(loc_lower, "_ncbi.fa")
+  )
+  ncbi_seqs <- read_fasta_list(ncbi_path)
+  names(ncbi_seqs) <- canonicalize(names(ncbi_seqs))
+
+  # ── Build one entry per canonical taxon ─────────────────────────────
+  out_lines <- c()
+
+  for (sp in canonical_taxa) {
+
+    sp_under <- gsub(" ", "_", sp)
+
+    # Mitogenome always wins if available
+    if (sp %in% names(mito_ext_seqs) && nchar(mito_ext_seqs[[sp]]) > 0) {
+      out_lines <- c(out_lines,
+                     paste0(">", sp_under,
+                            " [source=Mitogenome]",
+                            " [accession=", mito_ext_acc[[sp]], "]",
+                            " [len=", nchar(mito_ext_seqs[[sp]]), "]"),
+                     mito_ext_seqs[[sp]])
+      next
+    }
+
+    # FToL vs NCBI — pick longer, filter NCBI full mitogenomes
+    candidates <- list()
+
+    if (sp %in% names(ftol_seqs) && nchar(ftol_seqs[[sp]]) > 0) {
+      acc <- if (!is.na(ftol_acc[sp])) ftol_acc[sp] else "FToL"
+      candidates[["FToL"]] <- list(seq = ftol_seqs[[sp]],
+                                    acc = acc,
+                                    len = nchar(ftol_seqs[[sp]]))
+    }
+
+    if (sp %in% names(ncbi_seqs) && nchar(ncbi_seqs[[sp]]) > 0) {
+      raw_len <- nchar(ncbi_seqs[[sp]])
+      if (raw_len < 10000) {
+        acc <- ncbi_acc$accession[ncbi_acc$species == sp &
+                                    ncbi_acc$locus == loc]
+        acc <- if (length(acc) > 0) acc[1] else "NCBI"
+        candidates[["NCBI"]] <- list(seq = ncbi_seqs[[sp]],
+                                      acc = acc,
+                                      len = raw_len)
+      }
+    }
+
+    if (length(candidates) == 0) {
+      out_lines <- c(out_lines,
+                     paste0(">", sp_under,
+                            " [source=MISSING] [accession=NA] [len=0]"),
+                     "")
+      next
+    }
+
+    best_source <- names(which.max(sapply(candidates, `[[`, "len")))
+    best        <- candidates[[best_source]]
+
+    out_lines <- c(out_lines,
+                   paste0(">", sp_under,
+                          " [source=", best_source, "]",
+                          " [accession=", best$acc, "]",
+                          " [len=", best$len, "]"),
+                   best$seq)
+  }
+
+  outfile <- file.path(subdir, paste0(loc_lower, ".fa"))
+  writeLines(out_lines, outfile)
+
+  n_present <- sum(grepl("source=(?!MISSING)", out_lines, perl = TRUE))
+  cat(sprintf("%-10s %d/%d taxa\n", loc, n_present, length(canonical_taxa)))
+}
+
+cat("\nDone. Merged fastas in ~/Downloads/Boxfish/loci/merged/\n")
+```
+
+```{r}
+# ══════════════════════════════════════════════════════════════════════
+# ALIGN PER-LOCUS FASTAS WITH MAFFT
+# ══════════════════════════════════════════════════════════════════════
+
+mafft_path <- "/opt/miniconda3/bin/mafft"
+
+dir.create("~/Downloads/Boxfish/loci/aligned/mito",    recursive = TRUE, showWarnings = FALSE)
+dir.create("~/Downloads/Boxfish/loci/aligned/nuclear", recursive = TRUE, showWarnings = FALSE)
+
+for (loc in all_loci) {
+
+  is_mito   <- loc %in% mito_loci_names
+  loc_lower <- tolower(loc)
+
+  in_dir  <- if (is_mito) "~/Downloads/Boxfish/loci/merged/mito" else
+                           "~/Downloads/Boxfish/loci/merged/nuclear"
+  out_dir <- if (is_mito) "~/Downloads/Boxfish/loci/aligned/mito" else
+                           "~/Downloads/Boxfish/loci/aligned/nuclear"
+
+  infile  <- file.path(in_dir,  paste0(loc_lower, ".fa"))
+  outfile <- file.path(out_dir, paste0(loc_lower, "_aligned.fa"))
+
+  if (!file.exists(infile)) {
+    cat(sprintf("%-10s SKIPPED (file not found)\n", loc))
+    next
+  }
+
+  lines <- readLines(infile)
+
+  # Strip MISSING and full mitogenomes, keep only alignable sequences
+  non_missing <- c()
+  idx <- which(startsWith(lines, ">"))
+
+  for (i in seq_along(idx)) {
+    header  <- lines[idx[i]]
+    seq_end <- if (i < length(idx)) idx[i+1] - 1 else length(lines)
+    seq     <- trimws(paste(lines[(idx[i]+1):seq_end], collapse = ""))
+
+    if (grepl("MISSING", header)) next
+    if (nchar(seq) == 0)          next
+    if (nchar(seq) > 10000) {
+      cat(sprintf("  SKIPPING full mitogenome: %s (%d bp)\n",
+                  sub(" .*", "", header), nchar(seq)))
+      next
+    }
+    non_missing <- c(non_missing, header, seq)
+  }
+
+  if (length(non_missing) == 0) {
+    cat(sprintf("%-10s SKIPPED (no alignable sequences)\n", loc))
+    next
+  }
+
+  if (sum(startsWith(non_missing, ">")) < 2) {
+    cat(sprintf("%-10s SKIPPED (only 1 sequence)\n", loc))
+    next
+  }
+
+  tmp <- tempfile(fileext = ".fa")
+  writeLines(non_missing, tmp)
+
+  cmd <- sprintf("%s --auto --adjustdirectionaccurately --thread -1 %s > %s 2>/dev/null",
+                 mafft_path, tmp, outfile)
+  ret <- system(cmd)
+
+  if (ret == 0) {
+    n_seqs <- sum(startsWith(readLines(outfile), ">"))
+    cat(sprintf("%-10s %d taxa aligned\n", loc, n_seqs))
+  } else {
+    cat(sprintf("%-10s ERROR (mafft returned %d)\n", loc, ret))
+  }
+
+  file.remove(tmp)
+}
+
+cat("\nDone. Aligned fastas in ~/Downloads/Boxfish/loci/aligned/\n")
+```
+```{r}
+# ══════════════════════════════════════════════════════════════════════
+# SANITY CHECK ALIGNED LOCI
+# ══════════════════════════════════════════════════════════════════════
+
+library(ape)
+
+results <- lapply(all_loci, function(loc) {
+  is_mito   <- loc %in% mito_loci_names
+  loc_lower <- tolower(loc)
+  aln_dir   <- if (is_mito) "~/Downloads/Boxfish/loci/aligned/mito" else
+                             "~/Downloads/Boxfish/loci/aligned/nuclear"
+  aln_file  <- file.path(aln_dir, paste0(loc_lower, "_aligned.fa"))
+
+  if (!file.exists(aln_file)) {
+    return(data.frame(locus=loc, n_taxa=0, aln_len=NA,
+                      min_len=NA, max_len=NA, n_missing=NA,
+                      sources=NA, status="FILE MISSING"))
+  }
+
+  aln   <- read.dna(aln_file, format="fasta")
+  lines <- readLines(aln_file)
+  headers <- lines[startsWith(lines, ">")]
+
+  # Sequence lengths without gaps
+  raw_lens <- apply(as.character(aln), 1, function(x)
+    sum(x != "-" & x != "?"))
+
+  # Sources
+  sources <- regmatches(headers,
+                        regexpr("(?<=\\[source=)[^\\]]+", headers, perl=TRUE))
+  source_tab <- table(sources)
+
+  # How many canonical taxa are missing
+  taxa_present <- gsub(" \\[.*", "", sub("^>", "", headers))
+  taxa_present <- gsub("_", " ", taxa_present)
+  n_missing    <- sum(!canonical_taxa %in% taxa_present)
+
+  data.frame(
+    locus    = loc,
+    n_taxa   = nrow(aln),
+    aln_len  = ncol(aln),
+    min_len  = min(raw_lens),
+    max_len  = max(raw_lens),
+    n_missing = n_missing,
+    sources  = paste(names(source_tab), source_tab, sep="=", collapse=" | "),
+    status   = ifelse(min(raw_lens) > 0, "OK", "HAS EMPTY SEQ"),
+    stringsAsFactors = FALSE
+  )
+})
+
+report <- do.call(rbind, results)
+print(report, row.names = FALSE)
+
+# Flag anything suspicious
+cat("\n── Potential issues ──────────────────────────────────────────\n")
+if (any(report$status != "OK" & report$status != "FILE MISSING"))
+  cat("Empty sequences in:", paste(report$locus[report$status != "OK"], collapse=", "), "\n")
+if (any(report$n_taxa < 5))
+  cat("Low taxa count (<5):", paste(report$locus[report$n_taxa < 5], collapse=", "), "\n")
+if (any((report$max_len / report$min_len) > 3, na.rm=TRUE))
+  cat("High length variation (>3x):", 
+      paste(report$locus[(report$max_len / report$min_len) > 3], collapse=", "), "\n")
+cat("──────────────────────────────────────────────────────────────\n")
+```
+
+```{r}
+check_ftol_content <- function(loc) {
+  is_mito   <- loc %in% mito_loci_names
+  loc_lower <- tolower(loc)
+  path <- file.path(
+    if (is_mito) "~/Downloads/Boxfish/loci/ftol_mito" else
+                 "~/Downloads/Boxfish/loci/ftol_nuclear",
+    paste0(loc_lower, ".fa")
+  )
+  if (!file.exists(path)) return(NULL)
+  
+  lines <- readLines(path)
+  idx   <- which(startsWith(lines, ">"))
+  
+  lapply(seq_along(idx), function(i) {
+    header  <- sub("^>", "", lines[idx[i]])
+    seq_end <- if (i < length(idx)) idx[i+1] - 1 else length(lines)
+    seq     <- paste(lines[(idx[i]+1):seq_end], collapse = "")
+    # strip gaps AND spaces (ape writes sequences with spaces)
+    raw     <- gsub("[-\\? ]", "", seq)
+    data.frame(
+      locus    = loc,
+      taxon    = canonicalize(header),
+      raw_len  = nchar(raw),
+      has_data = nchar(raw) >= 100
+    )
+  }) |> do.call(what = rbind)
+}
+
+ftol_content <- lapply(all_loci, check_ftol_content) |>
+  do.call(what = rbind)
+
+ftol_content |>
+  group_by(locus) |>
+  summarise(has_data = sum(has_data), all_gaps = sum(!has_data)) |>
+  print(n = 40)
+```
+
+```{r}
+# Full presence/absence using real sequence content
+coverage_source_real <- expand.grid(
+  species = target_species,
+  locus   = locus_order,
+  stringsAsFactors = FALSE
+) |>
+  left_join(locus_type, by = "locus") |>
+  mutate(
+    # Mitogenome
+    has_mitogenome = species %in% mito_taxa_species & locus %in% mito_loci_names,
+    
+    # FToL — use real content check
+    has_ftol = mapply(function(sp, loc) {
+      row <- ftol_content[ftol_content$taxon == sp & ftol_content$locus == loc, ]
+      if (nrow(row) == 0) return(FALSE)
+      row$has_data[1]
+    }, species, locus),
+    
+    # NCBI
+    has_ncbi = mapply(function(sp, loc) {
+      row <- coverage_ncbi[coverage_ncbi$species == sp & coverage_ncbi$locus == loc, ]
+      if (nrow(row) == 0) return(FALSE)
+      isTRUE(row$found[1])
+    }, species, locus),
+
+    source = case_when(
+      has_mitogenome ~ "Mitogenome",
+      has_ftol       ~ "FToL",
+      has_ncbi       ~ "NCBI only",
+      TRUE           ~ "Missing"
+    ),
+    source = factor(source, levels = c("Mitogenome","FToL","NCBI only","Missing"))
+  )
+
+# Count per locus
+locus_counts_real <- coverage_source_real |>
+  filter(source != "Missing") |>
+  count(locus, name = "n_taxa")
+
+coverage_source_real |>
+  left_join(locus_counts_real, by = "locus") |>
+  mutate(
+    locus_label = paste0(locus, "\n(n=", ifelse(is.na(n_taxa), 0, n_taxa), ")"),
+    locus_label = factor(locus_label,
+                         levels = unique(locus_label[order(match(locus, locus_order))])),
+    species = factor(species, levels = rev(target_species)),
+    type    = factor(type,    levels = c("mtDNA","nuDNA"))
+  ) |>
+  ggplot(aes(x = locus_label, y = species, fill = source)) +
+  geom_tile(color = "white", linewidth = 0.5) +
+  scale_fill_manual(
+    values = c(
+      "Mitogenome" = "#2d6a4f",
+      "FToL"       = "#52b788",
+      "NCBI only"  = "#f4a261",
+      "Missing"    = "#f0f0f0"
+    )
+  ) +
+  facet_grid(. ~ type, scales = "free_x", space = "free_x") +
+  labs(title = "Data coverage by source", x = "", y = "", fill = "Source") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7),
+        axis.text.y = element_text(face = "italic", size = 8),
+        strip.text  = element_text(face = "bold"))
+```
+
+now the seqs are exploded by locus but not every taxon is in every locus file. fix this by adding in ?? where there is no data
+```{r}
+# ══════════════════════════════════════════════════════════════════════
+# ADD MISSING TAXA AS ? SEQUENCES TO ALIGNED FILES
+# ══════════════════════════════════════════════════════════════════════
+
+for (loc in all_loci) {
+  is_mito   <- loc %in% mito_loci_names
+  loc_lower <- tolower(loc)
+  aln_file  <- file.path(
+    if (is_mito) "~/Downloads/Boxfish/loci/aligned/mito" else
+                 "~/Downloads/Boxfish/loci/aligned/nuclear",
+    paste0(loc_lower, "_aligned.fa")
+  )
+
+  if (!file.exists(aln_file)) next
+
+  lines <- readLines(aln_file)
+  idx   <- which(startsWith(lines, ">"))
+
+  # Get alignment length from first sequence
+  seq_end   <- if (length(idx) > 1) idx[2] - 1 else length(lines)
+  first_seq <- paste(lines[(idx[1]+1):seq_end], collapse="")
+  aln_len   <- nchar(first_seq)
+
+  # Get taxa already present
+  present <- gsub(" \\[.*","", sub("^>","", lines[idx]))
+  present <- gsub("_"," ", present)
+
+  # Find missing canonical taxa
+  missing <- canonical_taxa[!canonical_taxa %in% present]
+
+  if (length(missing) == 0) next
+
+  # Append missing taxa as ? strings
+  new_lines <- c(lines)
+  for (sp in missing) {
+    new_lines <- c(new_lines,
+                   paste0(">", gsub(" ","_",sp),
+                          " [source=MISSING] [accession=NA] [len=0]"),
+                   paste(rep("?", aln_len), collapse=""))
+  }
+
+  writeLines(new_lines, aln_file)
+  cat(sprintf("%-10s added %d missing taxa (aln_len=%d)\n",
+              loc, length(missing), aln_len))
+}
+
+cat("\nDone.\n")
+```
+
+Don't forget about morphomatrix
+```{r}
+# Morpho code to canonical name mapping
+morpho_to_canonical <- c(
+  "acant_poly"       = "Acanthostracion polygonius",
+  "acant_quad"       = "Acanthostracion quadricornis",
+  "acant_nota"       = "Acanthostracion notacanthus",
+  "acant_guin"       = "Acanthostracion guineensis",
+  "lactp_bica"       = "Lactophrys bicaudalis",
+  "lactp_trig"       = "Lactophrys trigonus",
+  "lactp_triq"       = "Lactophrys triqueter",
+  "lacto_diap"       = "Lactoria diaphana",
+  "lacto_forn"       = "Lactoria fornasini",
+  "lacto_corn"       = "Lactoria cornuta",
+  "ostr_melea"       = "Ostracion meleagris",
+  "ostr_cyanu"       = "Ostracion cyanurus",
+  "ostr_cubic"       = "Ostracion cubicus",
+  "ostr_whitl"       = "Ostracion whitleyi",
+  "ostr_nasus"       = "Ostracion nasus",
+  "Ostr_rhino"       = "Rhynchostracion rhinorhynchus",
+  "tetr_repub"       = "Ostracion reipublicae",
+  "tetr_gibbo"       = "Tetrosomus gibbosus",
+  "tetr_conca"       = "Tetrosomus concatenatus",
+  "Kentrocapros"     = "Kentrocapros aculeatus",
+  "Polyplacapros"    = "Polyplacapros tyleri",
+  "Aracana"          = "Aracana aurita",
+  "Strophiurichthys" = "Strophiurichthys robustus",
+  "Anoplocapros"     = "Anoplocapros lenticularis",
+  "Caprichthys"      = "Caprichthys gymnura",
+  "Capropygia"       = "Capropygia unistriata"
+)
+
+# Read morpho matrix
+morpho_raw <- read.nexus.data("~/Downloads/Boxfish/morpho/Ostracioidea_K95_WT83.nex")
+
+# Check which canonical taxa have morpho data
+morpho_taxa <- morpho_to_canonical[names(morpho_raw)]
+
+cat("Canonical taxa WITH morpho data:\n")
+print(sort(morpho_taxa))
+
+cat("\nCanonical taxa WITHOUT morpho data:\n")
+print(canonical_taxa[!canonical_taxa %in% morpho_taxa])
+```
+
+```{r}
+# Taxa with morpho data
+morpho_species <- unname(morpho_to_canonical)
+
+# Add morpho column to coverage
+coverage_source_real <- expand.grid(
+  species = target_species,
+  locus   = c(locus_order, "Morphology"),
+  stringsAsFactors = FALSE
+) |>
+  left_join(
+    bind_rows(locus_type,
+              data.frame(locus = "Morphology", type = "Morphology")),
+    by = "locus"
+  ) |>
+  mutate(
+    has_mitogenome = species %in% mito_taxa_species & locus %in% mito_loci_names,
+
+    has_ftol = mapply(function(sp, loc) {
+      if (loc == "Morphology") return(FALSE)
+      row <- ftol_content[ftol_content$taxon == sp & ftol_content$locus == loc, ]
+      if (nrow(row) == 0) return(FALSE)
+      row$has_data[1]
+    }, species, locus),
+
+    has_ncbi = mapply(function(sp, loc) {
+      if (loc == "Morphology") return(FALSE)
+      row <- coverage_ncbi[coverage_ncbi$species == sp & coverage_ncbi$locus == loc, ]
+      if (nrow(row) == 0) return(FALSE)
+      isTRUE(row$found[1])
+    }, species, locus),
+
+    has_morpho = species %in% morpho_species & locus == "Morphology",
+
+    source = case_when(
+      locus == "Morphology" & has_morpho ~ "Morphology",
+      locus == "Morphology"              ~ "Missing",
+      has_mitogenome                     ~ "Mitogenome",
+      has_ftol                           ~ "FToL",
+      has_ncbi                           ~ "NCBI only",
+      TRUE                               ~ "Missing"
+    ),
+    source = factor(source, levels = c("Mitogenome","FToL","NCBI only",
+                                        "Morphology","Missing"))
+  )
+
+# Count per locus
+locus_counts_real <- coverage_source_real |>
+  filter(source != "Missing") |>
+  count(locus, name = "n_taxa")
+
+coverage_source_real |>
+  left_join(locus_counts_real, by = "locus") |>
+  mutate(
+    locus_label = paste0(locus, "\n(n=", ifelse(is.na(n_taxa), 0, n_taxa), ")"),
+    locus_label = factor(locus_label,
+                         levels = unique(locus_label[order(match(locus,
+                                          c(locus_order, "Morphology")))])),
+    species = factor(species, levels = rev(target_species)),
+    type    = factor(type, levels = c("mtDNA","nuDNA","Morphology"))
+  ) |>
+  ggplot(aes(x = locus_label, y = species, fill = source)) +
+  geom_tile(color = "white", linewidth = 0.5) +
+  scale_fill_manual(
+    values = c(
+      "Mitogenome" = "#2d6a4f",
+      "FToL"       = "#52b788",
+      "NCBI only"  = "#f4a261",
+      "Morphology" = "#9b72cf",
+      "Missing"    = "#f0f0f0"
+    )
+  ) +
+  facet_grid(. ~ type, scales = "free_x", space = "free_x") +
+  labs(title = "Data coverage by source", x = "", y = "", fill = "Source") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7),
+        axis.text.y = element_text(face = "italic", size = 8),
+        strip.text  = element_text(face = "bold"))
+```
+now build a supermatrix
+```{r}
+# ══════════════════════════════════════════════════════════════════════
+# BUILD SUPERMATRIX: MITO + NUCLEAR + MORPHO
+# ══════════════════════════════════════════════════════════════════════
+
+library(ape)
+dir.create("~/Downloads/Boxfish/supermatrix", recursive = TRUE, showWarnings = FALSE)
+
+# ── 1. Read all aligned loci ─────────────────────────────────────────
+
+read_aligned <- function(loc) {
+  is_mito   <- loc %in% mito_loci_names
+  loc_lower <- tolower(loc)
+  aln_file  <- file.path(
+    if (is_mito) "~/Downloads/Boxfish/loci/aligned/mito" else
+                 "~/Downloads/Boxfish/loci/aligned/nuclear",
+    paste0(loc_lower, "_aligned.fa")
+  )
+  if (!file.exists(aln_file)) return(NULL)
+
+  lines <- readLines(aln_file)
+  idx   <- which(startsWith(lines, ">"))
+
+  seqs <- lapply(seq_along(idx), function(i) {
+    seq_end <- if (i < length(idx)) idx[i+1] - 1 else length(lines)
+    seq     <- paste(lines[(idx[i]+1):seq_end], collapse = "")
+    # convert MISSING ? strings and gaps to ?
+    seq <- gsub(" ", "", seq)
+    seq
+  })
+  names(seqs) <- gsub(" \\[.*","", sub("^>","", lines[idx]))
+  names(seqs) <- gsub("_"," ", names(seqs))
+  seqs
+}
+
+# ── 2. Build per-locus matrices (32 taxa × aln_len) ──────────────────
+
+partition_info <- list()
+col_start      <- 1
+matrices       <- list()
+
+for (loc in all_loci) {
+  seqs <- read_aligned(loc)
+  if (is.null(seqs)) next
+
+  aln_len <- nchar(seqs[[1]])
+
+  # Build matrix — every canonical taxon gets a row
+  mat <- sapply(canonical_taxa, function(sp) {
+    if (sp %in% names(seqs)) {
+      strsplit(seqs[[sp]], "")[[1]]
+    } else {
+      rep("?", aln_len)
+    }
+  })
+  mat <- t(mat)  # taxa × sites
+
+  matrices[[loc]] <- mat
+
+  partition_info[[loc]] <- list(
+    start  = col_start,
+    end    = col_start + aln_len - 1,
+    type   = if (loc %in% mito_loci_names) "mtDNA" else "nuDNA"
+  )
+  col_start <- col_start + aln_len
+}
+
+# ── 3. Add morpho matrix ─────────────────────────────────────────────
+
+morpho_raw  <- read.nexus.data(
+  "~/Downloads/Boxfish/morpho/Ostracioidea_K95_WT83.nex")
+n_morpho    <- length(morpho_raw[[1]])
+
+morpho_mat <- t(sapply(canonical_taxa, function(sp) {
+  code <- names(morpho_to_canonical)[morpho_to_canonical == sp]
+  if (length(code) > 0 && code %in% names(morpho_raw)) {
+    morpho_raw[[code]]
+  } else {
+    rep("?", n_morpho)
+  }
+}))
+
+matrices[["Morphology"]] <- morpho_mat
+partition_info[["Morphology"]] <- list(
+  start = col_start,
+  end   = col_start + n_morpho - 1,
+  type  = "Morphology"
+)
+
+# ── 4. Concatenate all matrices ───────────────────────────────────────
+
+supermatrix <- do.call(cbind, matrices)
+rownames(supermatrix) <- gsub(" ", "_", canonical_taxa)
+
+cat("Supermatrix dimensions:", nrow(supermatrix), "taxa x",
+    ncol(supermatrix), "characters\n")
+
+# ── 5. Write NEXUS with partition info ───────────────────────────────
+
+n_total <- ncol(supermatrix)
+n_taxa  <- nrow(supermatrix)
+
+con <- file("~/Downloads/Boxfish/supermatrix/supermatrix.nex", "w")
+
+writeLines(c(
+  "#NEXUS", "",
+  "begin data;",
+  paste0("  dimensions ntax=", n_taxa, " nchar=", n_total, ";"),
+  paste0("  format datatype=mixed(",
+         "dna:1-", partition_info[["Morphology"]]$start - 1, ",",
+         "standard:", partition_info[["Morphology"]]$start, "-", n_total,
+         ") interleave=no missing=? gap=-;"),
+  "  matrix"
+), con)
+
+for (i in seq_len(n_taxa)) {
+  writeLines(paste0("  ", rownames(supermatrix)[i], "  ",
+                    paste(supermatrix[i,], collapse="")), con)
+}
+writeLines(c("  ;", "end;", ""), con)
+
+# ── 6. Write partition block ──────────────────────────────────────────
+
+writeLines("begin sets;", con)
+for (loc in names(partition_info)) {
+  p <- partition_info[[loc]]
+  writeLines(paste0("  charset ", loc, " = ", p$start, "-", p$end, ";"), con)
+}
+
+# Partition groups
+mito_parts    <- names(partition_info)[sapply(partition_info, `[[`, "type") == "mtDNA"]
+nuclear_parts <- names(partition_info)[sapply(partition_info, `[[`, "type") == "nuDNA"]
+
+writeLines(paste0("  charpartition supermatrix = ",
+                  paste(paste0("mtDNA:", mito_parts),    collapse=", "), ", ",
+                  paste(paste0("nuDNA:", nuclear_parts), collapse=", "), ", ",
+                  "Morphology:Morphology", ";"), con)
+writeLines("end;", con)
+close(con)
+
+# ── 7. Write RAxML/IQ-TREE partition file ────────────────────────────
+
+part_lines <- c()
+for (loc in names(partition_info)) {
+  p    <- partition_info[[loc]]
+  type <- if (p$type == "mtDNA" || p$type == "nuDNA") "DNA" else "MULTI"
+  part_lines <- c(part_lines,
+                  paste0(type, ", ", loc, " = ", p$start, "-", p$end))
+}
+writeLines(part_lines,
+           "~/Downloads/Boxfish/supermatrix/partitions.txt")
+
+# ── 8. Summary ────────────────────────────────────────────────────────
+
+cat("\nPartition summary:\n")
+for (loc in names(partition_info)) {
+  p <- partition_info[[loc]]
+  cat(sprintf("  %-12s %5d-%5d  (%d cols)  [%s]\n",
+              loc, p$start, p$end, p$end - p$start + 1, p$type))
+}
+cat("\nFiles written to ~/Downloads/Boxfish/supermatrix/\n")
+```
+
+```{r}
+# ══════════════════════════════════════════════════════════════════════
+# SANITY CHECK SUPERMATRIX
+# ══════════════════════════════════════════════════════════════════════
+
+# ── 1. Read it back in ───────────────────────────────────────────────
+lines <- readLines("~/Downloads/Boxfish/supermatrix/supermatrix.nex")
+
+# Basic structure
+cat("Total lines:", length(lines), "\n")
+cat("First 6 lines:\n")
+cat(lines[1:6], sep="\n")
+
+# ── 2. Check dimensions ──────────────────────────────────────────────
+dim_line <- lines[grep("dimensions", lines, ignore.case=TRUE)]
+cat("\nDimensions line:", dim_line, "\n")
+
+# ── 3. Check all canonical taxa are present ──────────────────────────
+taxa_in_matrix <- gsub("\\s+.*","", 
+                        trimws(lines[grep("^  [A-Z]", lines)]))
+cat("\nTaxa in matrix:", length(taxa_in_matrix), "\n")
+missing_taxa <- canonical_taxa[!gsub(" ","_",canonical_taxa) %in% taxa_in_matrix]
+if (length(missing_taxa) > 0) {
+  cat("MISSING TAXA:", paste(missing_taxa, collapse=", "), "\n")
+} else {
+  cat("All canonical taxa present ✓\n")
+}
+
+# ── 4. Check sequence lengths are all equal ──────────────────────────
+seq_lines <- lines[grep("^  [A-Z]", lines)]
+seq_lens  <- nchar(gsub("^  \\S+\\s+", "", seq_lines))
+cat("\nSequence length range:", min(seq_lens), "-", max(seq_lens), "\n")
+if (length(unique(seq_lens)) == 1) {
+  cat("All sequences same length ✓\n")
+} else {
+  cat("LENGTH MISMATCH — check these taxa:\n")
+  print(taxa_in_matrix[seq_lens != seq_lens[1]])
+}
+
+# ── 5. Check partitions ──────────────────────────────────────────────
+charset_lines <- lines[grep("charset", lines, ignore.case=TRUE)]
+cat("\nPartitions:\n")
+cat(charset_lines, sep="\n")
+
+# ── 6. Check partition coverage — no gaps, no overlaps ───────────────
+ranges <- lapply(charset_lines, function(l) {
+  m <- regmatches(l, regexpr("\\d+-\\d+", l))
+  if (length(m) == 0) return(NULL)
+  as.integer(strsplit(m, "-")[[1]])
+})
+ranges <- Filter(Negate(is.null), ranges)
+
+# Check contiguous
+ends   <- sapply(ranges, `[`, 2)
+starts <- sapply(ranges, `[`, 1)
+gaps   <- starts[-1] - ends[-length(ends)] - 1
+if (all(gaps == 0)) {
+  cat("\nPartitions contiguous, no gaps ✓\n")
+} else {
+  cat("\nGAPS BETWEEN PARTITIONS at positions:",
+      paste(which(gaps != 0), collapse=", "), "\n")
+}
+
+# Check total coverage
+total_covered <- sum(sapply(ranges, function(r) r[2] - r[1] + 1))
+cat("Total columns covered:", total_covered, "\n")
+cat("Supermatrix ncol:     ", unique(seq_lens), "\n")
+if (total_covered == unique(seq_lens)) {
+  cat("Partition coverage matches supermatrix ✓\n")
+} else {
+  cat("PARTITION COVERAGE MISMATCH\n")
+}
+
+# ── 7. Check missing data per taxon ──────────────────────────────────
+pct_missing <- sapply(seq_lines, function(l) {
+  seq <- gsub("^  \\S+\\s+", "", l)
+  chars <- strsplit(seq, "")[[1]]
+  round(sum(chars %in% c("?","-")) / length(chars) * 100, 1)
+})
+names(pct_missing) <- taxa_in_matrix
+
+cat("\nMissing data per taxon (%):\n")
+print(sort(pct_missing))
+cat("\nMean missing data:", round(mean(pct_missing), 1), "%\n")
+cat("Max missing data: ", max(pct_missing), "% (", 
+    names(pct_missing)[which.max(pct_missing)], ")\n")
+```
+```{r}
+coverage_source_real |>
+  filter(species %in% c("Lactoria paschae", "Lactoria diaphana")) |>
+  filter(source != "Missing") |>
+  select(species, locus, source) |>
+  arrange(locus)
+```
+
+```{r}
+# Taxa to exclude — 100% or near-100% missing molecular data
+exclude_taxa <- c(
+  "Lactoria paschae",           # 100% missing, synonym of diaphana
+  "Strophiurichthys robustus",  # 99.6% missing
+  "Polyplacapros tyleri",       # 99.6% missing
+  "Acanthostracion guineensis", # 99.6% missing
+  "Acanthostracion notacanthus",# 99.6% missing
+  "Ostracion cyanurus"          # 99.6% missing
+)
+
+reduced_taxa <- canonical_taxa[!canonical_taxa %in% exclude_taxa]
+cat("Reduced taxon set:", length(reduced_taxa), "taxa\n")
+print(reduced_taxa)
+```
+
+reduced taxa matrix
+```{r}
+# ══════════════════════════════════════════════════════════════════════
+# GENERATE REDUCED SUPERMATRIX (26 taxa, excluding 6 data-poor taxa)
+# ══════════════════════════════════════════════════════════════════════
+
+exclude_taxa <- c(
+  "Lactoria paschae",
+  "Strophiurichthys robustus",
+  "Polyplacapros tyleri",
+  "Acanthostracion guineensis",
+  "Acanthostracion notacanthus",
+  "Ostracion cyanurus"
+)
+
+reduced_taxa <- canonical_taxa[!canonical_taxa %in% exclude_taxa]
+
+# Read full supermatrix back in
+lines     <- readLines("~/Downloads/Boxfish/supermatrix/supermatrix.nex")
+seq_lines <- lines[grep("^  [A-Z]", lines)]
+
+# Filter to reduced taxa
+reduced_seq_lines <- seq_lines[
+  gsub("_"," ", gsub("\\s+.*","", trimws(seq_lines))) %in% reduced_taxa
+]
+
+n_taxa  <- length(reduced_seq_lines)
+seq_len <- nchar(gsub("^  \\S+\\s+","", reduced_seq_lines[1]))
+
+# Get partition info from full supermatrix
+charset_lines <- lines[grep("charset", lines, ignore.case=TRUE)]
+
+# Write reduced nexus
+con <- file("~/Downloads/Boxfish/supermatrix/supermatrix_26taxa.nex", "w")
+writeLines(c(
+  "#NEXUS", "",
+  "begin data;",
+  paste0("  dimensions ntax=", n_taxa, " nchar=", seq_len, ";"),
+  paste0("  format datatype=mixed(dna:1-",
+         partition_info[["Morphology"]]$start - 1,
+         ",standard:",
+         partition_info[["Morphology"]]$start, "-", seq_len,
+         ") interleave=no missing=? gap=-;"),
+  "  matrix"
+), con)
+writeLines(reduced_seq_lines, con)
+writeLines(c("  ;", "end;", ""), con)
+
+# Charset block
+writeLines("begin sets;", con)
+writeLines(charset_lines, con)
+writeLines("end;", con)
+close(con)
+
+cat("Written: supermatrix_26taxa.nex\n")
+cat("Taxa:", n_taxa, "\n")
+cat("Characters:", seq_len, "\n")
+```
+
+```{r}
+# ══════════════════════════════════════════════════════════════════════
+# SPLIT SUPERMATRIX INTO MOLECULAR + MORPHO FOR BEAUTI
+# ══════════════════════════════════════════════════════════════════════
+
+lines     <- readLines("~/Downloads/Boxfish/supermatrix/supermatrix_26taxa.nex")
+seq_lines <- lines[grep("^  [A-Z]", lines)]
+
+n_mol   <- partition_info[["Morphology"]]$start - 1
+n_morph <- partition_info[["Morphology"]]$end - partition_info[["Morphology"]]$start + 1
+
+# ── Molecular NEXUS ──────────────────────────────────────────────────
+con <- file("~/Downloads/Boxfish/supermatrix/molecular_26taxa.nex", "w")
+writeLines(c(
+  "#NEXUS", "",
+  "begin data;",
+  paste0("  dimensions ntax=26 nchar=", n_mol, ";"),
+  "  format datatype=dna interleave=no missing=? gap=-;",
+  "  matrix"
+), con)
+for (l in seq_lines) {
+  taxon <- gsub("\\s+.*", "", trimws(l))
+  seq   <- trimws(gsub("^\\s*\\S+\\s+", "", l))
+  mol_seq <- substr(seq, 1, n_mol)
+  writeLines(paste0("  ", taxon, "  ", mol_seq), con)
+}
+writeLines(c("  ;", "end;", ""), con)
+
+# Charset block — molecular only
+writeLines("begin sets;", con)
+for (loc in names(partition_info)) {
+  if (loc == "Morphology") next
+  p <- partition_info[[loc]]
+  writeLines(paste0("  charset ", loc, " = ", p$start, "-", p$end, ";"), con)
+}
+writeLines("end;", con)
+close(con)
+
+# ── Morphology NEXUS ─────────────────────────────────────────────────
+con <- file("~/Downloads/Boxfish/supermatrix/morpho_26taxa.nex", "w")
+writeLines(c(
+  "#NEXUS", "",
+  "begin data;",
+  paste0("  dimensions ntax=26 nchar=", n_morph, ";"),
+  "  format datatype=standard interleave=no missing=? gap=-;",
+  "  matrix"
+), con)
+for (l in seq_lines) {
+  taxon <- gsub("\\s+.*", "", trimws(l))
+  seq   <- trimws(gsub("^\\s*\\S+\\s+", "", l))
+  morph_seq <- substr(seq, n_mol + 1, n_mol + n_morph)
+  writeLines(paste0("  ", taxon, "  ", morph_seq), con)
+}
+writeLines(c("  ;", "end;", ""), con)
+close(con)
+
+cat("Written:\n")
+cat("  molecular_26taxa.nex —", n_mol, "chars\n")
+cat("  morpho_26taxa.nex —", n_morph, "chars\n")
+
+lines <- readLines("~/Downloads/Boxfish/supermatrix/morpho_26taxa.nex")
+cat(lines[1:10], sep="\n")
+
+lines     <- readLines("~/Downloads/Boxfish/supermatrix/supermatrix_26taxa.nex")
+seq_lines <- lines[grep("^  [A-Z]", lines)]
+
+# Check first taxon full sequence length
+l      <- seq_lines[1]
+taxon  <- gsub("\\s+.*", "", trimws(l))
+seq    <- trimws(gsub("^\\s*\\S+\\s+", "", l))
+cat("Taxon:", taxon, "\n")
+cat("Total seq length:", nchar(seq), "\n")
+cat("n_mol:", n_mol, "\n")
+cat("n_morph:", n_morph, "\n")
+cat("Morph seq:", substr(seq, n_mol+1, n_mol+n_morph), "\n")
+cat("Morph seq length:", nchar(substr(seq, n_mol+1, n_mol+n_morph)), "\n")
+
+con <- file("~/Downloads/Boxfish/supermatrix/morpho_26taxa.nex", "w")
+writeLines(c(
+  "#NEXUS", "",
+  "begin data;",
+  paste0("  dimensions ntax=26 nchar=", n_morph, ";"),
+  "  format datatype=standard symbols=\"0123\" interleave=no missing=? gap=-;",
+  "  matrix"
+), con)
+for (l in seq_lines) {
+  taxon <- gsub("\\s+.*", "", trimws(l))
+  seq   <- trimws(gsub("^\\s*\\S+\\s+", "", l))
+  morph_seq <- substr(seq, n_mol + 1, n_mol + n_morph)
+  writeLines(paste0("  ", taxon, "  ", morph_seq), con)
+}
+writeLines(c("  ;", "end;", ""), con)
+close(con)
+```
+
+```{r}
+library(ape)
+library(ggtree)
+
+astral_tree <- read.tree("~/Downloads/Boxfish/trees/astral_species_tree_final.tre")
+astral_tree$tip.label <- gsub("_", " ", astral_tree$tip.label)
+astral_rooted <- root(astral_tree, "Triodon macropterus", resolve.root = TRUE)
+
+ggtree(astral_rooted) +
+  geom_tiplab(fontface = "italic", size = 3) +
+  geom_nodelab(aes(label = label), size = 2.5, hjust = 1.5, vjust = -.4) +
+  xlim(0, 12) +
+  labs(title = "ASTRAL coalescent species tree")
+```
+
+
+view beast chain1 tree
+```{r}
+# Try reading with explicit path handling
+tree_file <- path.expand("~/Downloads/Boxfish/chain_1_$(boxfish)-COI.trees")
+
+# Check how many trees are in the file
+lines <- readLines(tree_file)
+n_trees <- sum(grepl("^tree ", lines, ignore.case = TRUE))
+cat("Number of trees:", n_trees, "\n")
+cat("First few lines:\n")
+head(lines, 10)
+
+# Read just the last 100 trees to check
+tree_lines <- readLines(tree_file)
+tree_idx <- grep("^tree ", tree_lines, ignore.case = TRUE)
+
+# Get the last tree
+last_tree_line <- tree_lines[tail(tree_idx, 1)]
+cat(substr(last_tree_line, 1, 200))
+
+# Read just one tree to check format
+library(ape)
+trees <- read.nexus(tree_file)
+class(trees)
+length(trees)
+```
+
+```{r}
+translation <- do.call(rbind, lapply(trans_lines, function(l) {
+  l <- trimws(gsub(",", "", l))
+  parts <- strsplit(l, "\\s+")[[1]]
+  parts <- parts[nzchar(parts)]  # remove empty strings from leading whitespace
+  data.frame(num = parts[1], name = parts[2], stringsAsFactors = FALSE)
+}))
+
+# Verify
+head(translation)
+
+# Apply to last tree
+last_tree <- trees[[length(trees)]]
+last_tree$tip.label <- translation$name[match(last_tree$tip.label, translation$num)]
+last_tree <- root(last_tree, "Triodon_macropterus", resolve.root = TRUE)
+last_tree$tip.label <- gsub("_", " ", last_tree$tip.label)
+
+ggtree(last_tree) +
+  geom_tiplab(fontface = "italic", size = 3) +
+  xlim(0, 200) +
+  labs(title = "BEAST chain 1 — last sampled tree")
+# Check what tip labels look like after translation
+last_tree$tip.label
+head(translation)
+
+trees[[length(trees)]]$tip.label
+```
+
+```{r}
+last_tree <- trees[[length(trees)]]
+last_tree <- root(last_tree, "Triodon_macropterus", resolve.root = TRUE)
+last_tree$tip.label <- gsub("_", " ", last_tree$tip.label)
+
+ggtree(last_tree) +
+  geom_tiplab(fontface = "italic", size = 3) +
+  xlim(0, 200) +
+  labs(title = "BEAST chain 1 — last sampled tree (state 20M)")
+```
+

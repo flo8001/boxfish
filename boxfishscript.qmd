@@ -1,0 +1,1656 @@
+---
+title: "Untitled"
+format: html
+---
+
+```{r}
+library(ape)
+library(tidyverse)
+# Reads the character/sequence data block
+morpho_data <- read.nexus.data("/Users/Flo/Downloads/Boxfish/old_work/Ostracioidea_K95_WT83.nex")
+
+# (Optional) Convert to DNAbin for molecular analysis
+dna_data <- read.dna("muscle_results/muscle-I20260206-203642-0302-71998231-p1m.sqr.fa", format = "fasta")
+
+```
+
+
+```{r}
+# dna_data is your DNAbin object
+
+dna_mat <- as.character(dna_data)
+morpho_mat <- do.call(rbind, morpho_data)
+
+#combined_matrix <- cbind(dna_mat, morpho_mat)
+
+dna_df <- as.data.frame(dna_mat)
+dna_df$ID <- rownames(dna_df) # Make sure IDs are a column first
+
+combined_df <- merge(dna_df, lookup, by = "ID", all.x = TRUE)
+combined_df <- combined_df[, c(1, which(names(combined_df) == "LatinName"), 
+                                 which(names(combined_df) != "LatinName")[-1])]
+```
+
+```{r}
+mitofiles <- list.files("boxfish-seqs/mitogenomes")
+mitofiles
+lookup <- data.frame(
+  ID = c("PV662072.1", 
+         "PV662073.1", 
+         "PV662076.1",
+         "NC011319.1",
+         "AP009175.1",
+         "OP057014.1",
+         "OP035078.2",
+         "NC_057981.1",
+         "NC_011330.1",
+         "NC_072284.1",
+         "OP834098.1",
+         "AP009176.1",
+         "KU308378.1",
+         "OP035246.1",
+         "NC_030005.1"
+         ), 
+  Species = c("acant_poly", 
+              "acant_quad", 
+              "acant_quad",
+              "anop_lent",
+              "kent_acul",
+              "lactp_bica",
+              "lactp_trig",
+              "lacto_corn",
+              "lacto_diap",
+              "ostr_cubic",
+              "ostr_cubic",
+              "ostr_imma",
+              "ostr_imma",
+              "ostr_melea",
+              "Ostr_rhino"
+              ),
+  stringsAsFactors = FALSE
+)
+```
+Acanthostracion_polygonius_mitogenome_PV662072.fasta
+
+
+
+```{r}
+library(ape)
+library(tidyverse)
+
+# --- 1. Define lookup FIRST ---
+# Fix the typo in lookup
+lookup <- data.frame(
+  ID = c("PV662072.1", "PV662073.1", "PV662076.1", "NC_011319.1",  # fixed underscore
+         "AP009175.1", "OP057014.1", "OP035078.2", "NC_057981.1",
+         "NC_011330.1", "NC_072284.1", "OP834098.1", "AP009176.1",
+         "KU308378.1", "OP035246.1", "NC_030005.1"),
+  Species = c("acant_poly", 
+              "acant_quad_1",
+              "acant_quad_2",
+              "anop_lent",
+              "kent_acul",
+              "lactp_bica",
+              "lactp_trig",
+              "lacto_corn",
+              "lacto_diap",
+              "ostr_cubic_1",
+              "ostr_cubic_2",
+              "ostr_imma_1",
+              "ostr_imma_2",
+              "ostr_melea",
+              "ostr_rhino"),  # also lowercased this
+  stringsAsFactors = FALSE
+)
+
+# --- 2. Read data ---
+morpho_data <- read.nexus.data("Ostracioidea_K95_WT83.nex")
+dna_data <- read.dna(
+  "muscle_results/muscle-I20260206-203642-0302-71998231-p1m.sqr.fa",
+  format = "fasta"
+)
+
+# --- 3. Convert to matrices ---
+dna_mat   <- as.character(dna_data)
+morpho_mat <- do.call(rbind, morpho_data)
+
+# --- 4. Add ID column to DNA df and merge with lookup ---
+dna_df <- as.data.frame(dna_mat)
+dna_df$ID <- rownames(dna_df)
+
+dna_named <- merge(dna_df, lookup, by = "ID", all.x = TRUE)
+
+# Check for any unmatched IDs (will have NA in Species)
+unmatched <- dna_named[is.na(dna_named$Species), "ID"]
+if (length(unmatched) > 0) message("Unmatched IDs: ", paste(unmatched, collapse = ", "))
+
+# --- 5. Set Species as rownames to match morpho_mat ---
+rownames(dna_named) <- dna_named$Species
+dna_named$ID <- NULL
+dna_named$Species <- NULL
+
+# --- 6. Find shared taxa and combine ---
+shared_taxa <- intersect(rownames(dna_named), rownames(morpho_mat))
+message(length(shared_taxa), " shared taxa found")
+
+combined_mat <- cbind(
+  morpho_mat[shared_taxa, ],
+  dna_named[shared_taxa, ]
+)
+```
+
+```{r}
+# Read the full alignment
+aln <- read.dna("Ostraciidae.phylip", format = "sequential")
+
+# --- Mitochondrial loci ---
+s12s     <- aln[, 1:979]
+s16s     <- aln[, 980:1756]
+coi      <- aln[, 2292:2973]
+cytb     <- aln[, 2974:4114]
+nd2      <- aln[, 8822:9868]
+nd4      <- aln[, 9869:11401]
+
+# --- Nuclear loci ---
+s4c4     <- aln[, 1757:2291]
+enc1     <- aln[, 4115:4954]
+ficd     <- aln[, 4955:5680]
+glyt     <- aln[, 5681:6613]
+hoxc6a   <- aln[, 6614:7243]
+kiaa1239 <- aln[, 7244:7987]
+myh6     <- aln[, 7988:8821]
+panx2    <- aln[, 11402:12141]
+plagl2   <- aln[, 12142:12951]
+ptr      <- aln[, 12952:13662]
+rag1     <- aln[, 13663:15116]
+rag2     <- aln[, 15117:16340]
+rhodopsin<- aln[, 16341:17264]
+ripk4    <- aln[, 17265:17909]
+sh3px3   <- aln[, 17910:18632]
+sidkey   <- aln[, 18633:19727]
+sreb2    <- aln[, 19728:20714]
+svep1    <- aln[, 20715:21521]
+tbr1     <- aln[, 21522:22349]
+vcpip    <- aln[, 22350:23114]
+zic1     <- aln[, 23115:24143]
+
+# --- Create output directories ---
+dir.create("loci/mito",    recursive = TRUE, showWarnings = FALSE)
+dir.create("loci/nuclear", recursive = TRUE, showWarnings = FALSE)
+
+# --- Write mitochondrial loci ---
+write.dna(s12s,     "loci/mito/12s.fa",     format = "fasta")
+write.dna(s16s,     "loci/mito/16s.fa",     format = "fasta")
+write.dna(coi,      "loci/mito/coi.fa",     format = "fasta")
+write.dna(cytb,     "loci/mito/cytb.fa",    format = "fasta")
+write.dna(nd2,      "loci/mito/nd2.fa",     format = "fasta")
+write.dna(nd4,      "loci/mito/nd4.fa",     format = "fasta")
+
+# --- Write nuclear loci ---
+write.dna(s4c4,      "loci/nuclear/4c4.fa",      format = "fasta")
+write.dna(enc1,      "loci/nuclear/enc1.fa",      format = "fasta")
+write.dna(ficd,      "loci/nuclear/ficd.fa",      format = "fasta")
+write.dna(glyt,      "loci/nuclear/glyt.fa",      format = "fasta")
+write.dna(hoxc6a,    "loci/nuclear/hoxc6a.fa",    format = "fasta")
+write.dna(kiaa1239,  "loci/nuclear/kiaa1239.fa",  format = "fasta")
+write.dna(myh6,      "loci/nuclear/myh6.fa",      format = "fasta")
+write.dna(panx2,     "loci/nuclear/panx2.fa",     format = "fasta")
+write.dna(plagl2,    "loci/nuclear/plagl2.fa",    format = "fasta")
+write.dna(ptr,       "loci/nuclear/ptr.fa",       format = "fasta")
+write.dna(rag1,      "loci/nuclear/rag1.fa",      format = "fasta")
+write.dna(rag2,      "loci/nuclear/rag2.fa",      format = "fasta")
+write.dna(rhodopsin, "loci/nuclear/rhodopsin.fa", format = "fasta")
+write.dna(ripk4,     "loci/nuclear/ripk4.fa",     format = "fasta")
+write.dna(sh3px3,    "loci/nuclear/sh3px3.fa",    format = "fasta")
+write.dna(sidkey,    "loci/nuclear/sidkey.fa",    format = "fasta")
+write.dna(sreb2,     "loci/nuclear/sreb2.fa",     format = "fasta")
+write.dna(svep1,     "loci/nuclear/svep1.fa",     format = "fasta")
+write.dna(tbr1,      "loci/nuclear/tbr1.fa",      format = "fasta")
+write.dna(vcpip,     "loci/nuclear/vcpip.fa",     format = "fasta")
+write.dna(zic1,      "loci/nuclear/zic1.fa",      format = "fasta")
+
+message("Done! ", ncol(aln), " total columns split into 27 loci across loci/mito/ and loci/nuclear/")
+```
+```{r}
+# See all taxa in the alignment
+ftol_species <- as.matrix(rownames(aln))
+
+# How many taxa
+nrow(aln)
+as.matrix(ftol_species)
+```
+
+```{r}
+library(ape)
+library(ggtree)  # or just use ape for a quick plot
+
+tree <- read.tree("/Users/Flo/Downloads/Boxfish/boxfish_mito_iqtree.treefile")
+
+# Quick plot with ape
+plot(tree, main="Boxfish Mitogenome Phylogeny")
+nodelabels(tree$node.label, cex=0.7, frame="none", adj=c(1.2, -0.3))
+
+# Or with ggtree for prettier output
+library(ggtree)
+ggtree(tree) + 
+    geom_tiplab() + 
+    geom_nodelab(aes(label=label), size=3) +
+    xlim(0, 0.5)
+```
+
+```{r}
+library(ape)
+
+# Read the tree
+
+
+# Lookup table
+lookup <- data.frame(
+  ID = c("PV662072.1", "PV662073.1", "NC_011319.1", "NC_009864.1",
+         "OP057014.1", "OP035078.2", "NC_057981.1", "NC_011330.1",
+         "NC_072284.1", "NC_009865.1", "OP035246.1", "NC_030005.1",
+         "NC_009859.1"),
+  Species = c("Acanthostracion polygonius", "Acanthostracion quadricornis",
+              "Anoplocapros lenticularis", "Kentrocapros aculeatus",
+              "Lactophrys bicaudalis", "Lactophrys trigonus",
+              "Lactoria cornuta", "Lactoria diaphana",
+              "Ostracion cubicus", "Ostracion immaculatus",
+              "Ostracion meleagris", "Ostracion rhinorhynchos",
+              "Triodon macropterus (outgroup)"),
+  stringsAsFactors = FALSE
+)
+
+# Replace tip labels with "Species (ID)" format
+tree$tip.label <- sapply(tree$tip.label, function(id) {
+  match_row <- lookup[lookup$ID == id, ]
+  if (nrow(match_row) > 0) {
+    paste0(match_row$Species, " (", id, ")")
+  } else {
+    id  # keep original if no match found
+  }
+})
+
+# Plot
+par(mar = c(1, 1, 2, 1))
+plot(tree, 
+     main = "Boxfish Mitogenome Phylogeny (GTR+G, 1000 bootstrap)",
+     cex = 0.8,          # tip label size
+     label.offset = 0.005)
+nodelabels(tree$node.label, 
+           cex = 0.6, 
+           frame = "none", 
+           adj = c(1.2, -0.3),
+           col = "blue")
+add.scale.bar()
+```
+```{r}
+library(ape)
+
+# Root explicitly on Triodon
+tree_rooted <- root(tree, 
+                    outgroup = grep("Triodon", tree$tip.label, value = TRUE),
+                    resolve.root = TRUE)  # this resolves the trifurcation
+
+# Plot
+par(mar = c(1, 1, 2, 1))
+plot(tree_rooted,
+     main = "Boxfish Mitogenome Phylogeny (GTR+G, 1000 bootstrap)",
+     cex = 0.8,
+     label.offset = 0.005)
+nodelabels(tree_rooted$node.label,
+           cex = 0.6,
+           frame = "none",
+           adj = c(1.2, -0.3),
+           col = "blue")
+add.scale.bar()
+```
+
+```{r}
+morpho <- read.nexus.data("morpho/Ostracioidea_K95_WT83.nex")
+
+# Check what taxa are in it
+names(morpho)
+```
+```{r}
+library(ape)
+library(phangorn)
+
+# ── 1. Read morpho matrix ──────────────────────────────────────────
+morpho <- read.nexus.data("morpho/Ostracioidea_K95_WT83.nex")
+morpho_mat <- do.call(rbind, morpho)
+
+# Check what characters look like
+unique(as.vector(morpho_mat))
+```
+
+```{r}
+library(ape)
+library(phangorn)
+
+# ── 1. Read morpho matrix ──────────────────────────────────────────
+morpho <- read.nexus.data("morpho/Ostracioidea_K95_WT83.nex")
+morpho_mat <- do.call(rbind, morpho)
+
+# ── 2. Convert to phyDat ──────────────────────────────────────────
+morpho_phydat <- phyDat(morpho_mat, 
+                         type = "USER", 
+                         levels = c("0", "1", "2", "3"))
+
+# ── 3. Build parsimony tree ────────────────────────────────────────
+set.seed(42)
+morpho_mp <- pratchet(morpho_phydat, 
+                      trace = 0,
+                      minit = 100,
+                      k = 10)
+
+# Check what we got
+print(morpho_mp)
+plot(morpho_mp, main = "Unrooted morpho parsimony tree")
+
+plot(morpho_mp, 
+     type = "unrooted", 
+     main = "Unrooted Morpho Parsimony Tree",
+     cex = 0.7,
+     lab4ut = "axial") 
+nodelabels(morpho_mp$node.label, cex=0.5, frame="none")
+```
+
+```{r}
+# Root on Aracana as single outgroup taxon
+morpho_mp_rooted <- root(morpho_mp, 
+                          outgroup = "Aracana",
+                          resolve.root = TRUE)
+
+# ── Now do the side by side comparison ────────────────────────────
+# Read and prepare the mito tree
+tree_mito <- read.tree("/Users/Flo/Downloads/Boxfish/boxfish_mito_iqtree.treefile")
+
+# Rename mito tips to morpho-style codes
+mito_to_morpho <- data.frame(
+  ID = c("PV662072.1", "PV662073.1", "NC_011319.1", "NC_009864.1",
+         "OP057014.1", "OP035078.2", "NC_057981.1", "NC_011330.1",
+         "NC_072284.1", "NC_009865.1", "OP035246.1", "NC_030005.1",
+         "NC_009859.1"),
+  morpho_code = c("acant_poly", "acant_quad", "Anoplocapros", "Kentrocapros",
+                  "lactp_bica", "lactp_trig", "lacto_corn", "lacto_diap",
+                  "ostr_cubic", "ostr_imma", "ostr_melea", "Ostr_rhino",
+                  "Triodon"),
+  stringsAsFactors = FALSE
+)
+
+tree_mito$tip.label <- mito_to_morpho$morpho_code[
+  match(tree_mito$tip.label, mito_to_morpho$ID)
+]
+
+# Keep only shared taxa between both trees
+shared <- intersect(tree_mito$tip.label, names(morpho))
+cat("Shared taxa:", length(shared), "\n")
+cat(shared, sep="\n")
+
+# Prune both trees to shared taxa only
+tree_mito_pruned <- keep.tip(tree_mito, shared)
+tree_morpho_pruned <- keep.tip(morpho_mp_rooted, shared)
+
+# ── Side by side plot ──────────────────────────────────────────────
+par(mfrow = c(1, 2), mar = c(1, 1, 3, 1))
+
+plot(tree_morpho_pruned,
+     main = "Morphological Parsimony\n(shared taxa only)",
+     cex = 0.8,
+     label.offset = 0.01)
+nodelabels(tree_morpho_pruned$node.label,
+           cex = 0.55,
+           frame = "none",
+           adj = c(1.2, -0.3),
+           col = "blue")
+
+plot(tree_mito_pruned,
+     main = "Mitogenome ML\n(shared taxa only)",
+     cex = 0.8,
+     label.offset = 0.005)
+nodelabels(tree_mito_pruned$node.label,
+           cex = 0.55,
+           frame = "none",
+           adj = c(1.2, -0.3),
+           col = "blue")
+write.tree(tree_morpho_pruned, "morpho_topology.tre")
+```
+
+```{r}
+# Reverse lookup - morpho codes to accession IDs
+morpho_to_mito <- data.frame(
+  morpho_code = c("acant_poly", "acant_quad", "Anoplocapros", "Kentrocapros",
+                  "lactp_bica", "lactp_trig", "lacto_corn", "lacto_diap",
+                  "ostr_cubic", "ostr_melea", "Ostr_rhino"),
+  ID = c("PV662072.1", "PV662073.1", "NC_011319.1", "NC_009864.1",
+         "OP057014.1", "OP035078.2", "NC_057981.1", "NC_011330.1",
+         "NC_072284.1", "OP035246.1", "NC_030005.1"),
+  stringsAsFactors = FALSE
+)
+
+# Rename tips in morpho tree to accession IDs
+tree_morpho_renamed <- tree_morpho_pruned
+tree_morpho_renamed$tip.label <- morpho_to_mito$ID[
+  match(tree_morpho_renamed$tip.label, morpho_to_mito$morpho_code)
+]
+
+# Check all tips got renamed (no NAs)
+print(tree_morpho_renamed$tip.label)
+
+# Save with accession number tips
+write.tree(tree_morpho_renamed, "morpho_topology.tre")
+file.exists("morpho_topology.tre")
+```
+```{r}
+library(ape)
+
+# Read the aligned fasta
+aln <- read.dna("boxfish-seqs/mitogenomes/all_mitogenomes_aligned.fasta", 
+                format = "fasta")
+
+# Keep only the 11 shared taxa
+shared_ids <- c("PV662072.1", "PV662073.1", "NC_011319.1", "NC_009864.1",
+                "OP057014.1", "OP035078.2", "NC_057981.1", "NC_011330.1",
+                "NC_072284.1", "OP035246.1", "NC_030005.1")
+
+# Subset alignment - match by rowname prefix since headers have long descriptions
+keep <- sapply(shared_ids, function(id) grep(id, rownames(aln)))
+aln_pruned <- aln[keep, ]
+
+# Check
+nrow(aln_pruned)  # should be 11
+rownames(aln_pruned)
+
+# Write pruned alignment
+write.dna(aln_pruned, 
+          "boxfish-seqs/mitogenomes/all_mitogenomes_aligned_11taxa.fasta",
+          format = "fasta")
+```
+
+```{r}
+library(ape)
+
+# Read pruned alignment
+aln_pruned <- read.dna(
+  "boxfish-seqs/mitogenomes/all_mitogenomes_aligned_11taxa.fasta",
+  format = "fasta")
+
+# Check current rownames
+rownames(aln_pruned)
+
+# Strip to just accession number (first word before space)
+rownames(aln_pruned) <- gsub(" .*", "", rownames(aln_pruned))
+
+# Confirm
+rownames(aln_pruned)
+
+# Rewrite
+write.dna(aln_pruned,
+          "boxfish-seqs/mitogenomes/all_mitogenomes_aligned_11taxa.fasta",
+          format = "fasta")
+
+print(tree_morpho_renamed$tip.label)
+```
+
+```{r}
+# Read aligned fasta
+aln <- read.dna("boxfish-seqs/mitogenomes/all_mitogenomes_aligned.fasta",
+                format = "fasta")
+
+# Clean rownames to accession only
+rownames(aln) <- gsub(" .*", "", rownames(aln))
+
+# Write as nexus
+write.nexus.data(as.list(as.data.frame(t(aln))),
+                 file = "boxfish-seqs/mitogenomes/all_mitogenomes.nex",
+                 format = "dna")
+```
+
+```{r}
+mrbayes_block <- '
+begin mrbayes;
+    set autoclose=yes nowarn=yes;
+    outgroup NC_009859.1;
+    lset nst=6 rates=gamma ngammacat=4;
+    mcmc ngen=2000000 nchains=4 samplefreq=500 
+         printfreq=500 savebrlens=yes 
+         filename=boxfish_mrbayes;
+    sump burnin=500;
+    sumt burnin=500;
+end;
+'
+write(mrbayes_block, 
+      file = "boxfish-seqs/mitogenomes/all_mitogenomes.nex",
+      append = TRUE)
+```
+
+```{r}
+# In R, prepare the combined nexus file
+# First write the combined data
+
+# Read morpho matrix
+morpho <- read.nexus.data("morpho/Ostracioidea_K95_WT83.nex")
+
+# Read molecular alignment  
+mol <- read.dna("boxfish-seqs/mitogenomes/all_mitogenomes_aligned.fasta",
+                format = "fasta")
+rownames(mol) <- gsub(" .*", "", rownames(mol))
+```
+
+```{r}
+begin mrbayes;
+    set autoclose=yes nowarn=yes;
+    
+    [Define partitions]
+    charset molecular = 1-16476;
+    charset morpho = 16477-16576;  [adjust to actual positions]
+    partition myparts = 2: molecular, morpho;
+    set partition = myparts;
+    
+    [Molecular model - GTR+G]
+    lset applyto=(1) nst=6 rates=gamma ngammacat=4;
+    
+    [Morphological model - Mkv]
+    lset applyto=(2) nst=1 rates=gamma ngammacat=4;
+    prset applyto=(2) symdirihyperpr=fixed(infinity) 
+                      coding=variable;
+    
+    [Unlink parameters between partitions]
+    unlink statefreq=(all) revmat=(all) 
+           shape=(all) pinvar=(all);
+    
+    [MCMC settings]
+    outgroup NC_009859.1;
+    mcmc ngen=5000000 nchains=4 
+         samplefreq=1000 printfreq=1000
+         savebrlens=yes filename=boxfish_total;
+    sump burnin=1250;
+    sumt burnin=1250;
+end;
+```
+```{r}
+# ── 1. Check morpho taxa ───────────────────────────────────────────
+morpho <- read.nexus.data("morpho/Ostracioidea_K95_WT83.nex")
+cat("Morpho taxa:\n")
+print(names(morpho))
+cat("\nN morpho taxa:", length(morpho), "\n")
+cat("N morpho characters:", length(morpho[[1]]), "\n")
+
+# ── 2. Check molecular taxa ────────────────────────────────────────
+mol <- read.dna("boxfish-seqs/mitogenomes/all_mitogenomes_aligned.fasta",
+                format = "fasta")
+rownames(mol) <- gsub(" .*", "", rownames(mol))
+cat("\nMolecular taxa:\n")
+print(rownames(mol))
+cat("\nN molecular taxa:", nrow(mol), "\n")
+cat("N molecular characters:", ncol(mol), "\n")
+```
+```{r}
+name_map <- data.frame(
+  morpho_code = c("acant_poly", "acant_quad", "acant_nota", "acant_guin",
+                  "lactp_bica", "lactp_trig", "lactp_triq", "lacto_diap",
+                  "lacto_forn", "lacto_corn", "ostr_melea", "ostr_cyanu",
+                  "ostr_cubic", "ostr_whitl", "ostr_nasus", "Ostr_rhino",
+                  "tetr_repub", "tetr_gibbo", "tetr_conca", "Kentrocapros",
+                  "Polyplacapros", "Aracana", "Strophiurichthys", "Anoplocapros",
+                  "Caprichthys", "Capropygia",
+                  "Triodon"),  # outgroup - molecular only
+  accession = c("PV662072.1", "PV662073.1", NA, NA,
+                "OP057014.1", "OP035078.2", NA, "NC_011330.1",
+                NA, "NC_057981.1", "OP035246.1", NA,
+                "NC_072284.1", NA, NA, "NC_030005.1",
+                NA, NA, NA, "NC_009864.1",
+                NA, NA, NA, "NC_011319.1",
+                NA, NA,
+                "NC_009859.1"),
+  stringsAsFactors = FALSE
+)
+
+print(name_map)
+```
+
+```{r}
+# ── 1. Read data ───────────────────────────────────────────────────
+morpho <- read.nexus.data("morpho/Ostracioidea_K95_WT83.nex")
+mol <- read.dna("boxfish-seqs/mitogenomes/all_mitogenomes_aligned.fasta",
+                format = "fasta")
+rownames(mol) <- gsub(" .*", "", rownames(mol))
+
+# ── 2. Build molecular matrix with missing data for morpho-only taxa
+n_mol_chars <- ncol(mol)
+n_morpho_chars <- length(morpho[[1]])
+all_taxa <- name_map$morpho_code  # use morpho codes as universal names
+
+# Create empty molecular matrix filled with ? for all 27 taxa
+mol_combined <- matrix("?", 
+                        nrow = nrow(name_map), 
+                        ncol = n_mol_chars,
+                        dimnames = list(all_taxa, NULL))
+
+# Fill in molecular data for taxa that have it
+for(i in 1:nrow(name_map)) {
+  acc <- name_map$accession[i]
+  if(!is.na(acc) && acc %in% rownames(mol)) {
+    mol_combined[i, ] <- as.character(mol[acc, ])
+  }
+}
+
+# ── 3. Build morpho matrix with missing data for molecular-only taxa
+morpho_combined <- matrix("?",
+                           nrow = nrow(name_map),
+                           ncol = n_morpho_chars,
+                           dimnames = list(all_taxa, NULL))
+
+# Fill in morpho data for taxa that have it
+for(i in 1:nrow(name_map)) {
+  code <- name_map$morpho_code[i]
+  if(code %in% names(morpho)) {
+    morpho_combined[i, ] <- morpho[[code]]
+  }
+}
+
+# ── 4. Combine into one matrix ─────────────────────────────────────
+combined <- cbind(mol_combined, morpho_combined)
+cat("Combined matrix dimensions:", nrow(combined), "taxa x", ncol(combined), "characters\n")
+cat("Molecular partition: 1 -", n_mol_chars, "\n")
+cat("Morpho partition:", n_mol_chars + 1, "-", n_mol_chars + n_morpho_chars, "\n")
+
+# ── 5. Write nexus file ────────────────────────────────────────────
+write.nexus.data(as.list(as.data.frame(t(combined))),
+                 file = "boxfish-seqs/mitogenomes/total_evidence.nex",
+                 format = "dna",
+                 interleaved = FALSE)
+
+# ── 6. Append MrBayes block ───────────────────────────────────────
+mrbayes_block <- paste0('
+begin mrbayes;
+    set autoclose=yes nowarn=yes;
+
+    [Define partitions]
+    charset molecular = 1-', n_mol_chars, ';
+    charset morpho = ', n_mol_chars + 1, '-', n_mol_chars + n_morpho_chars, ';
+    partition totalevidence = 2: molecular, morpho;
+    set partition = totalevidence;
+
+    [Molecular model - GTR+G]
+    lset applyto=(1) nst=6 rates=gamma ngammacat=4;
+
+    [Morphological model - Mkv with gamma]
+    lset applyto=(2) nst=1 rates=gamma ngammacat=4;
+    prset applyto=(2) symdirihyperpr=fixed(infinity)
+                      coding=variable;
+
+    [Unlink parameters between partitions]
+    unlink statefreq=(all) revmat=(all)
+           shape=(all) pinvar=(all);
+    prset applyto=(all) ratepr=variable;
+
+    [Outgroup]
+    outgroup Triodon;
+
+    [MCMC]
+    mcmc ngen=5000000 nchains=4
+         samplefreq=1000 printfreq=1000
+         savebrlens=yes filename=boxfish_total;
+    sump burnin=1250;
+    sumt burnin=1250;
+end;
+')
+
+write(mrbayes_block,
+      file = "boxfish-seqs/mitogenomes/total_evidence.nex",
+      append = TRUE)
+
+cat("Done! File written to boxfish-seqs/mitogenomes/total_evidence.nex\n")
+file.exists("boxfish-seqs/mitogenomes/total_evidence.nex")
+```
+```{r}
+library(ape)
+
+# ── Build single combined nexus manually ──────────────────────────
+n_mol <- ncol(mol_combined)
+n_morph <- ncol(morpho_combined)
+n_total <- n_mol + n_morph
+n_taxa <- nrow(mol_combined)
+taxa_names <- rownames(mol_combined)
+
+# Open file
+con <- file("boxfish-seqs/mitogenomes/total_evidence.nex", "w")
+
+# Header
+writeLines("#NEXUS", con)
+writeLines("", con)
+writeLines("begin data;", con)
+writeLines(paste0("  dimensions ntax=", n_taxa, " nchar=", n_total, ";"), con)
+writeLines("  format datatype=mixed(dna:1-21326, standard:21327-21446) interleave=no missing=? gap=-;", con)
+writeLines("  matrix", con)
+
+# Write each taxon — molecular + morpho concatenated
+for(i in 1:n_taxa) {
+  mol_seq <- paste(mol_combined[i,], collapse="")
+  morph_seq <- paste(morpho_combined[i,], collapse="")
+  full_seq <- paste0(mol_seq, morph_seq)
+  writeLines(paste0("  ", taxa_names[i], "  ", full_seq), con)
+}
+
+writeLines("  ;", con)
+writeLines("end;", con)
+writeLines("", con)
+
+# MrBayes block
+writeLines("begin mrbayes;", con)
+writeLines("  set autoclose=yes nowarn=yes;", con)
+writeLines("", con)
+writeLines(paste0("  charset molecular = 1-", n_mol, ";"), con)
+writeLines(paste0("  charset morpho = ", n_mol+1, "-", n_total, ";"), con)
+writeLines("  partition totalevidence = 2: molecular, morpho;", con)
+writeLines("  set partition = totalevidence;", con)
+writeLines("", con)
+writeLines("  lset applyto=(1) nst=6 rates=gamma ngammacat=4;", con)
+writeLines("  lset applyto=(2) nst=1 rates=gamma ngammacat=4;", con)
+writeLines("  prset applyto=(2) symdirihyperpr=fixed(infinity) coding=variable;", con)
+writeLines("", con)
+writeLines("  unlink statefreq=(all) revmat=(all) shape=(all) pinvar=(all);", con)
+writeLines("  prset applyto=(all) ratepr=variable;", con)
+writeLines("", con)
+writeLines("  outgroup Triodon;", con)
+writeLines("  mcmc ngen=5000000 nchains=4", con)
+writeLines("       samplefreq=1000 printfreq=1000", con)
+writeLines("       savebrlens=yes filename=boxfish_total;", con)
+writeLines("  sump burnin=1250;", con)
+writeLines("  sumt burnin=1250;", con)
+writeLines("end;", con)
+
+close(con)
+
+# Verify
+lines <- readLines("boxfish-seqs/mitogenomes/total_evidence.nex")
+cat("Total lines:", length(lines), "\n")
+cat("\nFirst 6 lines:\n")
+cat(lines[1:6], sep="\n")
+cat("\nLines around matrix:\n")
+cat(lines[grep("matrix", lines, ignore.case=TRUE)], sep="\n")
+cat("\nLast 10 lines:\n")
+cat(tail(lines, 10), sep="\n")
+```
+
+```{r}
+con <- file("boxfish-seqs/mitogenomes/total_evidence.nex", "w")
+
+n_mol <- ncol(mol_combined)
+n_morph <- ncol(morpho_combined)
+n_total <- n_mol + n_morph
+taxa_names <- rownames(mol_combined)
+
+writeLines("#NEXUS", con)
+writeLines("", con)
+writeLines("begin data;", con)
+writeLines(paste0("  dimensions ntax=", length(taxa_names), " nchar=", n_total, ";"), con)
+writeLines("  format datatype=mixed(dna:1-21326, standard:21327-21446) interleave=no missing=? gap=-;", con)
+writeLines("  matrix", con)
+
+for(i in seq_along(taxa_names)) {
+  mol_seq   <- paste(mol_combined[i,],   collapse="")
+  morph_seq <- paste(morpho_combined[i,], collapse="")
+  writeLines(paste0("  ", taxa_names[i], "  ", mol_seq, morph_seq), con)
+}
+
+writeLines("  ;", con)
+writeLines("end;", con)
+writeLines("", con)
+
+# Check exact outgroup name
+triodon_name <- taxa_names[grep("riodon", taxa_names, ignore.case=TRUE)]
+cat("Outgroup taxon name:", triodon_name, "\n")
+
+writeLines("begin mrbayes;", con)
+writeLines("  set autoclose=yes nowarn=yes;", con)
+writeLines("", con)
+writeLines(paste0("  charset molecular = 1-", n_mol, ";"), con)
+writeLines(paste0("  charset morpho = ", n_mol+1, "-", n_total, ";"), con)
+writeLines("  partition totalevidence = 2: molecular, morpho;", con)
+writeLines("  set partition = totalevidence;", con)
+writeLines("", con)
+writeLines("  lset applyto=(1) nst=6 rates=gamma ngammacat=4;", con)
+writeLines("  lset applyto=(2) nst=1 rates=gamma ngammacat=4 coding=variable;", con)
+writeLines("", con)
+writeLines("  prset applyto=(1) statefreqpr=dirichlet(1,1,1,1);", con)
+writeLines("  prset applyto=(2) symdirihyperpr=fixed(infinity);", con)
+writeLines("  prset applyto=(all) ratepr=variable;", con)
+writeLines("", con)
+writeLines("  unlink statefreq=(all) revmat=(all) shape=(all);", con)
+writeLines("", con)
+writeLines(paste0("  outgroup ", triodon_name, ";"), con)
+writeLines("  mcmc ngen=2000000 nchains=4 nruns=2", con)
+writeLines("       samplefreq=500 printfreq=500", con)
+writeLines("       savebrlens=yes filename=boxfish_total;", con)
+writeLines("  sump burnin=500;", con)
+writeLines("  sumt burnin=500;", con)
+writeLines("end;", con)
+
+close(con)
+
+# Final check
+lines <- readLines("boxfish-seqs/mitogenomes/total_evidence.nex")
+cat("Total lines:", length(lines), "\n")
+cat("\nMrBayes block:\n")
+cat(lines[grep("begin mrbayes", lines, ignore.case=TRUE):length(lines)], sep="\n")
+```
+
+```{r}
+# Read the full FToL alignment
+ftol <- read.phyDat("/Users/Flo/Downloads/Boxfish/final_alignment.phylip", format="phylip")
+
+# Check if Triodon is there
+names(ftol)[grep("Triodon", names(ftol), ignore.case=TRUE)]
+```
+```{r}
+# Read full FToL alignment - may take a moment, it's large
+ftol_full <- read.dna("/Users/Flo/Downloads/Boxfish/final_alignment.phylip", format="interleaved")
+
+# Find Triodon
+triodon_row <- grep("Triodon", rownames(ftol_full), ignore.case=TRUE)
+rownames(ftol_full)[triodon_row]
+```
+
+```{r}
+# Extract Triodon
+triodon <- ftol_full[triodon_row, ]
+
+# Read your Ostraciidae alignment
+ostrax <- read.dna("~/Downloads/Boxfish/ftol/Ostraciidae.phylip", format="sequential")
+dim(ostrax)
+
+# Combine
+combined <- rbind(ostrax, triodon)
+rownames(combined)[nrow(combined)] <- "Triodon_macropterus"
+
+# Check dimensions match
+dim(ostrax)
+dim(combined)
+
+# Write new phylip
+write.dna(combined, 
+          file="~/Downloads/Boxfish/ftol/Ostraciidae_with_triodon.phylip",
+          format="interleaved")
+
+cat("Taxa:", nrow(combined), "\n")
+cat("Characters:", ncol(combined), "\n")
+```
+
+```{r}
+write.dna(combined,
+          file="~/Downloads/Boxfish/ftol/Ostraciidae_with_triodon.phylip",
+          format="interleaved")
+```
+
+```{r}
+combined <- read.dna("~/Downloads/Boxfish/ftol/Ostraciidae_with_triodon.phylip", 
+                     format="interleaved")
+
+write.dna(combined,
+          file="~/Downloads/Boxfish/ftol/Ostraciidae_with_triodon.phylip",
+          format="sequential",
+          colsep="")
+
+test <- read.dna("~/Downloads/Boxfish/ftol/Ostraciidae_with_triodon.phylip", 
+                 format="sequential")
+cat("Taxa:", nrow(test), "\n")
+cat("Characters:", ncol(test), "\n")
+cat("Taxon names:\n")
+print(rownames(test))
+
+# Check Triodon name exactly
+cat("\nTriodon name:", rownames(test)[grep("Triodon", rownames(test))], "\n")
+
+# Check first few lines of the written file
+writeLines(readLines("~/Downloads/Boxfish/ftol/Ostraciidae_with_triodon.phylip", n=5))
+```
+
+```{r}
+ostrax <- read.dna("~/Downloads/Boxfish/ftol/Ostraciidae.phylip", format="sequential")
+ftol_full <- read.dna("~/Downloads/Boxfish/final_alignment.phylip", format="interleaved")
+
+triodon <- ftol_full[grep("Triodon_macropterus", rownames(ftol_full)),]
+
+combined <- rbind(ostrax, triodon)
+
+# Verify all same length
+seq_lengths <- sapply(1:nrow(combined), function(i) sum(!is.na(combined[i,])))
+cat("Unique lengths:", unique(ncol(combined)), "\n")
+cat("Nrow:", nrow(combined), "\n")
+
+write.dna(combined,
+          file="~/Downloads/Boxfish/ftol/Ostraciidae_with_triodon.phylip",
+          format="sequential",
+          colsep="",
+          nbcol=-1)
+```
+
+
+```{r}
+triodon <- ftol_full[grep("Triodon_macropterus", rownames(ftol_full)),]
+
+combined <- rbind(ostrax, triodon)
+
+# Verify all same length
+seq_lengths <- sapply(1:nrow(combined), function(i) sum(!is.na(combined[i,])))
+cat("Unique lengths:", unique(ncol(combined)), "\n")
+cat("Nrow:", nrow(combined), "\n")
+
+write.dna(combined,
+          file="~/Downloads/Boxfish/ftol/Ostraciidae_with_triodon.phylip",
+          format="sequential",
+          colsep="",
+          nbcol=-1)
+```
+
+```{r}
+# Read it back and verify
+test <- read.dna("~/Downloads/Boxfish/ftol/Ostraciidae_with_triodon.phylip", format="sequential")
+cat("Taxa:", nrow(test), "\n")
+cat("Characters:", ncol(test), "\n")
+
+# Check first few lines of raw file
+writeLines(readLines("~/Downloads/Boxfish/ftol/Ostraciidae_with_triodon.phylip", n=3))
+```
+```{r}
+mito_tree <- read.tree("~/Downloads/Boxfish/boxfish_mito_iqtree.treefile")
+nuclear_tree <- read.tree("~/Downloads/Boxfish/ftol/nuclear_iqtree.treefile")
+morpho_tree <- read.tree("~/Downloads/Boxfish/morpho_topology.tre")
+
+# Root nuclear on Triodon
+nuclear_tree <- root(nuclear_tree, "Triodon_macropterus", resolve.root=TRUE)
+
+# Plot side by side
+par(mfrow=c(1,3))
+plot(mito_tree, main="Mitogenome (IQ-TREE)", cex=0.7)
+plot(nuclear_tree, main="Nuclear (IQ-TREE)", cex=0.7)
+plot(morpho_tree, main="Morphology (Parsimony)", cex=0.7)
+```
+
+```{r}
+library(ape)
+
+# Name mapping
+name_map <- c(
+  "PV662072.1" = "Acanthostracion polygonius",
+  "PV662073.1" = "Acanthostracion quadricornis",
+  "OP057014.1" = "Lactophrys bicaudalis",
+  "OP035078.2" = "Lactophrys trigonus",
+  "NC_011330.1" = "Lactoria diaphana",
+  "NC_057981.1" = "Lactoria cornuta",
+  "OP035246.1" = "Ostracion meleagris",
+  "NC_072284.1" = "Ostracion cubicus",
+  "NC_030005.1" = "Ostracion rhinorhynchos",
+  "NC_009864.1" = "Kentrocapros aculeatus",
+  "NC_011319.1" = "Anoplocapros lenticularis",
+  "NC_009865.1" = "Ostracion immaculatus",
+  "NC_009859.1" = "Triodon macropterus"
+)
+
+morpho_map <- c(
+  "acant_poly" = "Acanthostracion polygonius",
+  "acant_quad" = "Acanthostracion quadricornis",
+  "acant_nota" = "Acanthostracion notacanthus",
+  "acant_guin" = "Acanthostracion guineensis",
+  "lactp_bica" = "Lactophrys bicaudalis",
+  "lactp_trig" = "Lactophrys trigonus",
+  "lactp_triq" = "Lactophrys triqueter",
+  "lacto_diap" = "Lactoria diaphana",
+  "lacto_forn" = "Lactoria fornasini",
+  "lacto_corn" = "Lactoria cornuta",
+  "ostr_melea" = "Ostracion meleagris",
+  "ostr_cyanu" = "Ostracion cyanurus",
+  "ostr_cubic" = "Ostracion cubicus",
+  "ostr_whitl" = "Ostracion whitleyi",
+  "ostr_nasus" = "Rhynchostracion nasus",
+  "Ostr_rhino" = "Ostracion rhinorhynchos",
+  "tetr_repub" = "Tetrosomus reipublicae",
+  "tetr_gibbo" = "Tetrosomus gibbosus",
+  "tetr_conca" = "Tetrosomus concatenatus",
+  "Kentrocapros" = "Kentrocapros aculeatus",
+  "Polyplacapros" = "Polyplacapros cumingii",
+  "Aracana" = "Aracana aurita",
+  "Strophiurichthys" = "Strophiurichthys robustus",
+  "Anoplocapros" = "Anoplocapros lenticularis",
+  "Caprichthys" = "Caprichthys gymnura",
+  "Capropygia" = "Capropygia unistriata",
+  "Triodon" = "Triodon macropterus"
+)
+
+# Load and relabel trees
+mito_tree <- read.tree("~/Downloads/Boxfish/boxfish_mito_iqtree.treefile")
+nuclear_tree <- read.tree("~/Downloads/Boxfish/ftol/nuclear_iqtree.treefile")
+morpho_tree <- read.tree("~/Downloads/Boxfish/morpho_topology.tre")
+
+mito_tree$tip.label <- name_map[mito_tree$tip.label]
+morpho_tree$tip.label <- name_map[morpho_tree$tip.label]
+nuclear_tree <- root(nuclear_tree, "Triodon_macropterus", resolve.root=TRUE)
+nuclear_tree$tip.label <- gsub("_", " ", nuclear_tree$tip.label)
+
+# Plot
+par(mfrow=c(1,3))
+plot(mito_tree, main="Mitogenome (IQ-TREE)", cex=0.7)
+plot(nuclear_tree, main="Nuclear loci (IQ-TREE)", cex=0.7)
+plot(morpho_tree, main="Morphology (Parsimony)", cex=0.7)
+morpho_tree$tip.label
+```
+
+```{r}
+morpho_tree <- root(morpho_tree, 
+                    outgroup=c("Kentrocapros aculeatus", "Anoplocapros lenticularis"),
+                    resolve.root=TRUE)
+
+par(mfrow=c(1,3))
+plot(mito_tree, main="Mitogenome (IQ-TREE)", cex=0.8)
+plot(nuclear_tree, main="Nuclear loci (IQ-TREE)", cex=0.8)
+plot(morpho_tree, main="Morphology (Parsimony)", cex=0.8)
+```
+```{r}
+morpho_tree <- root(morpho_tree, 
+                    outgroup="Kentrocapros aculeatus",
+                    resolve.root=TRUE)
+
+plot(morpho_tree, main="Morphology (Parsimony)", cex=0.8)
+```
+```{r}
+library(ape)
+
+mrbayes_tree <- read.nexus("~/Downloads/Boxfish/boxfish_total.con.tre")
+
+# Relabel using the name map from before
+#mrbayes_tree$tip.label <- name_map[mrbayes_tree$tip.label]
+
+plot(mrbayes_tree, main="morpho-mitogenome (MrBayes)", cex=0.8)
+
+mrbayes_tree$tip.label
+```
+
+```{r}
+# Check if the tree has node labels (posterior probabilities)
+mrbayes_tree$node.label
+
+# Plot with node labels
+plot(mrbayes_tree, main="morpho-mitogenome (MrBayes)", cex=0.8)
+nodelabels(mrbayes_tree$node.label, cex=0.6, frame="none", adj=c(1.2, -0.3))
+```
+```{r}
+library(ape)
+
+# Read trees
+mito_tree <- read.tree("~/Downloads/Boxfish/boxfish_mito_iqtree.treefile")
+nuclear_tree <- read.tree("~/Downloads/Boxfish/ftol/nuclear_iqtree.treefile")
+nuclear_tree <- root(nuclear_tree, "Triodon_macropterus", resolve.root=TRUE)
+
+# Relabel
+mito_tree$tip.label <- name_map[mito_tree$tip.label]
+nuclear_tree$tip.label <- gsub("_", " ", nuclear_tree$tip.label)
+morpho_tree$tip.label <- name_map[morpho_tree$tip.label]
+
+# Plot all three with node labels
+par(mfrow=c(1,3))
+
+plot(mito_tree, main="Mitogenome (IQ-TREE)", cex=0.7)
+nodelabels(mito_tree$node.label, cex=0.5, frame="none", adj=c(1.2,-0.3))
+
+plot(nuclear_tree, main="Nuclear loci (IQ-TREE)", cex=0.7)
+nodelabels(nuclear_tree$node.label, cex=0.5, frame="none", adj=c(1.2,-0.3))
+
+plot(morpho_tree, main="Morphology (Parsimony)", cex=0.7)
+```
+
+```{r}
+rp <- c("CCACCATTAGCACCCAAAGC")
+grepl(rp)
+```
+
+```{r}
+readLines("~/Downloads/Boxfish/final_alignment.partitions")
+```
+
+```{r}
+mito_taxa <- rownames(mol_combined)  # accession IDs
+ftol_taxa <- rownames(ostrax)        # full species names  
+morpho_taxa <- rownames(morpho_combined)  # short codes
+mito_taxa
+ftol_taxa
+morpho_taxa
+
+mol <- read.dna("~/Downloads/Boxfish/boxfish-seqs/mitogenomes/all_mitogenomes_aligned.fasta", format="fasta")
+dim(mol)
+rownames(mol)
+```
+```{r}
+library(phangorn)
+morpho <- read.phyDat("~/Downloads/Boxfish/morpho/Ostracioidea_K95_WT83.nex", format="nexus")
+morpho_combined <- as.character(morpho)
+dim(morpho_combined)
+rownames(morpho_combined)
+```
+```{r}
+list.files("~/Downloads/Boxfish/lastz_out/")
+library(tidyverse)
+
+# Function to parse MAF file and extract alignment blocks
+parse_maf <- function(filepath) {
+  lines <- readLines(filepath)
+  s_lines <- lines[grepl("^s ", lines)]
+  
+  blocks <- lapply(s_lines, function(l) {
+    parts <- strsplit(trimws(l), "\\s+")[[1]]
+    list(
+      src = parts[2],
+      start = as.numeric(parts[3]),
+      size = as.numeric(parts[4]),
+      strand = parts[5],
+      srcSize = as.numeric(parts[6])
+    )
+  })
+  blocks
+}
+
+# Parse all MAF files
+maf_dir <- "~/Downloads/Boxfish/lastz_out/"
+maf_files <- list.files(maf_dir, pattern="\\.maf$", full.names=TRUE)
+
+# Build data frame of alignment blocks
+all_blocks <- map_dfr(maf_files, function(f) {
+  species <- gsub("_vs_ref.maf", "", basename(f))
+  species <- gsub("_mitogenome.*", "", species)
+  species <- gsub("_", " ", species)
+  
+  blocks <- parse_maf(f)
+  
+  # Skip if fewer than 2 blocks (reference vs itself)
+  if(length(blocks) < 2) return(NULL)
+  
+  ref_block <- blocks[[1]]
+  query_block <- blocks[[2]]
+  
+  data.frame(
+    species = species,
+    ref_start = ref_block$start,
+    ref_end = ref_block$start + ref_block$size,
+    query_start = query_block$start,
+    query_end = query_block$start + query_block$size,
+    query_size = query_block$srcSize
+  )
+})
+# Plot synteny
+ggplot(all_blocks, aes(x=ref_start, xend=ref_end, 
+                        y=species, yend=species)) +
+  geom_segment(linewidth=8, aes(color=species)) +
+  geom_vline(xintercept=c(0, 16829), linetype="dashed", alpha=0.3) +
+  scale_x_continuous(labels=scales::comma, 
+                     name="Reference position (bp)",
+                     limits=c(0, 17500)) +
+  labs(title="Mitogenome synteny vs. Ostracion immaculatus reference",
+       y="") +
+  theme_minimal() +
+  theme(legend.position="none",
+        axis.text.y=element_text(face="italic", size=9))
+```
+
+```{r}
+
+# Read the GenBank file
+gb <- read.GenBank("~/Downloads/Boxfish/reference/Ostracion_immaculatus_Ref_mitogenome_NC_009865.1.gb")
+
+# Or read it as text to see the annotations
+gb_lines <- readLines("~/Downloads/Boxfish/reference/Ostracion_immaculatus_Ref_mitogenome_NC_009865.1.gb")
+
+# Find gene coordinate lines
+gene_lines <- gb_lines[grepl("gene|rRNA|CDS", gb_lines)]
+print(gene_lines)
+```
+```{r}
+# Check file modification dates
+file.info("~/Downloads/Boxfish/final_alignment.phylip")$mtime
+file.info("~/Downloads/Boxfish/final_alignment.partitions")$mtime
+
+# Or check if there's a README
+list.files("~/Downloads/Boxfish/", pattern="README|readme|CHANGELOG", ignore.case=TRUE)
+```
+
+```{r}
+library(tidyverse)
+
+# Species in each dataset
+mito_species <- c(
+  "Acanthostracion polygonius",
+  "Acanthostracion quadricornis", 
+  "Anoplocapros lenticularis",
+  "Kentrocapros aculeatus",
+  "Lactophrys bicaudalis",
+  "Lactophrys trigonus",
+  "Lactoria cornuta",
+  "Lactoria diaphana",
+  "Ostracion cubicus",
+  "Ostracion immaculatus",
+  "Ostracion meleagris",
+  "Ostracion rhinorhynchos",
+  "Triodon macropterus"
+)
+
+ftol_species <- gsub("_", " ", rownames(ostrax))
+
+morpho_species <- c(
+  "Acanthostracion polygonius", "Acanthostracion quadricornis",
+  "Acanthostracion notacanthus", "Acanthostracion guineensis",
+  "Lactophrys bicaudalis", "Lactophrys trigonus", "Lactophrys triqueter",
+  "Lactoria diaphana", "Lactoria fornasini", "Lactoria cornuta",
+  "Ostracion meleagris", "Ostracion cyanurus", "Ostracion cubicus",
+  "Ostracion whitleyi", "Rhynchostracion nasus", "Ostracion rhinorhynchos",
+  "Tetrosomus reipublicae", "Tetrosomus gibbosus", "Tetrosomus concatenatus",
+  "Kentrocapros aculeatus", "Polyplacapros cumingii", "Aracana aurita",
+  "Strophiurichthys robustus", "Anoplocapros lenticularis",
+  "Caprichthys gymnura", "Capropygia unistriata", "Triodon macropterus"
+)
+
+# All unique species
+all_species <- sort(unique(c(mito_species, ftol_species, morpho_species)))
+
+# Build presence/absence matrix
+coverage <- data.frame(
+  Species = all_species,
+  Mitogenome = all_species %in% mito_species,
+  FToL_nuclear = all_species %in% ftol_species,
+  Morphology = all_species %in% morpho_species
+)
+
+print(coverage)
+
+# Summary
+cat("\nTotal species:", nrow(coverage), "\n")
+cat("Mitogenome only:", sum(coverage$Mitogenome & !coverage$FToL_nuclear & !coverage$Morphology), "\n")
+cat("All three:", sum(coverage$Mitogenome & coverage$FToL_nuclear & coverage$Morphology), "\n")
+cat("At least two:", sum(rowSums(coverage[,-1]) >= 2), "\n")
+```
+
+```{r}
+# All unique species
+all_species <- sort(unique(c(mito_species, ftol_species, morpho_species)))
+
+# FToL mito loci taxa
+ftol_mito_species <- gsub("_", " ", rownames(ostrax))  # same taxa as ftol but mito loci only
+
+# Build presence/absence matrix
+coverage <- data.frame(
+  Species = all_species,
+  Mitogenome = all_species %in% mito_species,
+  Mito_loci_FToL = all_species %in% ftol_mito_species,  # 12s,16s,COI,Cytb,ND2,ND4
+  Nuclear_loci = all_species %in% ftol_species,
+  Morphology = all_species %in% morpho_species
+)
+
+# Visualize as heatmap
+coverage_long <- coverage %>%
+  pivot_longer(-Species, names_to="Data_type", values_to="Present") %>%
+  mutate(Data_type = factor(Data_type, 
+                            levels=c("Mitogenome","Mito_loci_FToL",
+                                     "Nuclear_loci","Morphology")))
+
+ggplot(coverage_long, aes(x=Data_type, y=Species, fill=Present)) +
+  geom_tile(color="white", linewidth=0.5) +
+  scale_fill_manual(values=c("TRUE"="#2d6a4f", "FALSE"="#f0f0f0"),
+                  labels=c("TRUE"="Present", "FALSE"="Absent"))+
+  labs(title="Data coverage across taxa",
+       x="", y="", fill="") +
+  theme_minimal() +
+  theme(axis.text.x=element_text(angle=45, hjust=1),
+        axis.text.y=element_text(face="italic", size=8))
+```
+
+```{r}
+# Complete target species list
+target_species <- c(
+  "Anoplocapros amygdaloides",
+  "Anoplocapros lenticularis",
+  "Anoplocapros inermis",
+  "Strophiurichthys robustus",
+  "Aracana aurita",
+  "Aracana ornata",
+  "Capropygia unistriata",
+  "Kentrocapros aculeatus",
+  "Polyplacapros tyleri",
+  "Acanthostracion guineensis",
+  "Acanthostracion notacanthus",
+  "Acanthostracion polygonius",
+  "Acanthostracion quadricornis",
+  "Lactophrys bicaudalis",
+  "Lactophrys trigonus",
+  "Lactophrys triqueter",
+  "Lactoria cornuta",
+  "Lactoria diaphana",
+  "Lactoria fornasini",
+  "Lactoria paschae",
+  "Ostracion cubicus",
+  "Ostracion cyanurus",
+  "Ostracion immaculatus",
+  "Ostracion meleagris",
+  "Ostracion nasus",
+  "Rhynchostracion rhinorhynchus",
+  "Ostracion solorensis",
+  "Ostracion whitleyi",
+  "Tetrosomus concatenatus",
+  "Tetrosomus gibbosus",
+  "Ostracion reipublicae",
+  "Triodon macropterus"
+)
+
+# Add any extras from datasets not in target list
+extras <- unique(c(mito_species, ftol_species, morpho_species))
+extras <- extras[!extras %in% target_species]
+cat("Extra species in datasets not in target list:\n")
+print(extras)
+
+# Combine
+all_species <- sort(unique(c(target_species, extras)))
+
+# Build coverage matrix
+coverage <- data.frame(
+  Species = all_species,
+  Mitogenome = all_species %in% mito_species,
+  Mito_loci_FToL = all_species %in% ftol_mito_species,
+  Nuclear_loci = all_species %in% ftol_species,
+  Morphology = all_species %in% morpho_species
+) %>%
+  mutate(In_target = Species %in% target_species)
+
+# Visualize
+coverage_long <- coverage %>%
+  pivot_longer(c(Mitogenome, Mito_loci_FToL, Nuclear_loci, Morphology),
+               names_to="Data_type", values_to="Present") %>%
+  mutate(Data_type = factor(Data_type,
+                            levels=c("Mitogenome","Mito_loci_FToL",
+                                     "Nuclear_loci","Morphology")),
+         Species = factor(Species, levels=rev(all_species)))
+
+ggplot(coverage_long, aes(x=Data_type, y=Species, fill=Present)) +
+  geom_tile(color="white", linewidth=0.5) +
+  scale_fill_manual(values=c("TRUE"="#2d6a4f", "FALSE"="#f0f0f0"),
+                    labels=c("TRUE"="Present", "FALSE"="Absent")) +
+  labs(title="Data coverage across taxa", x="", y="", fill="") +
+  theme_minimal() +
+  theme(axis.text.x=element_text(angle=45, hjust=1),
+        axis.text.y=element_text(face="italic", size=8))
+```
+
+```{r}
+#install.packages("rentrez")
+library(rentrez)
+
+# Test single search
+res <- entrez_search(
+  db="nucleotide",
+  term="Lactoria cornuta[ORGN] AND cytochrome b[TITLE]",
+  retmax=5
+)
+cat("Hits:", res$count, "\n")
+print(res$ids)
+
+# Alternative search formats
+res1 <- entrez_search(db="nucleotide", 
+                      term="Lactoria cornuta[ORGN] AND cytb[ALL]", retmax=5)
+res2 <- entrez_search(db="nucleotide", 
+                      term="Lactoria cornuta[ORGN] AND cytochrome b[ALL]", retmax=5)
+res3 <- entrez_search(db="nucleotide", 
+                      term="Lactoria cornuta[ORGN] AND COI[ALL]", retmax=5)
+
+cat("cytb [ALL]:", res1$count, "\n")
+cat("cytochrome b [ALL]:", res2$count, "\n")
+cat("COI [ALL]:", res3$count, "\n")
+```
+```{r}
+# All locus search terms
+locus_terms <- list(
+  # Mitochondrial
+  "COI"      = "COI[ALL] OR COX1[ALL] OR cytochrome oxidase subunit 1[ALL]",
+  "cytb"     = "cytochrome b[ALL]",
+  "16S"      = "16S[ALL] OR 16S ribosomal[ALL]",
+  "12S"      = "12S[ALL] OR 12S ribosomal[ALL]",
+  "ND2"      = "NADH dehydrogenase subunit 2[ALL] OR ND2[ALL]",
+  "ND4"      = "NADH dehydrogenase subunit 4[ALL] OR ND4[ALL]",
+  "ND1"      = "NADH dehydrogenase subunit 1[ALL] OR ND1[ALL]",
+  "ND3"      = "NADH dehydrogenase subunit 3[ALL] OR ND3[ALL]",
+  "ND4L"     = "NADH dehydrogenase subunit 4L[ALL] OR ND4L[ALL]",
+  "ND5"      = "NADH dehydrogenase subunit 5[ALL] OR ND5[ALL]",
+  "ND6"      = "NADH dehydrogenase subunit 6[ALL] OR ND6[ALL]",
+  "COX2"     = "COX2[ALL] OR cytochrome oxidase subunit 2[ALL]",
+  "COX3"     = "COX3[ALL] OR cytochrome oxidase subunit 3[ALL]",
+  "ATP6"     = "ATP6[ALL] OR ATPase subunit 6[ALL]",
+  "ATP8"     = "ATP8[ALL] OR ATPase subunit 8[ALL]",
+  # Nuclear - FToL loci
+  "4c4"      = "4c4[ALL]",
+  "enc1"     = "enc1[ALL] OR ectodermal-neural cortex[ALL]",
+  "ficd"     = "ficd[ALL]",
+  "glyt"     = "glyt[ALL] OR glycine transporter[ALL]",
+  "hoxc6a"   = "hoxc6a[ALL] OR hoxc6[ALL]",
+  "kiaa1239" = "kiaa1239[ALL]",
+  "myh6"     = "myh6[ALL] OR myosin heavy chain 6[ALL]",
+  "panx2"    = "panx2[ALL] OR pannexin 2[ALL]",
+  "plagl2"   = "plagl2[ALL]",
+  "ptr"      = "ptr[ALL] OR parathyroid hormone receptor[ALL]",
+  "rag1"     = "rag1[ALL] OR recombination activating gene 1[ALL]",
+  "rag2"     = "rag2[ALL] OR recombination activating gene 2[ALL]",
+  "rhodopsin" = "rhodopsin[ALL]",
+  "ripk4"    = "ripk4[ALL]",
+  "sh3px3"   = "sh3px3[ALL]",
+  "sidkey"   = "sidkey[ALL]",
+  "sreb2"    = "sreb2[ALL]",
+  "svep1"    = "svep1[ALL]",
+  "tbr1"     = "tbr1[ALL] OR T-box brain transcription factor[ALL]",
+  "vcpip"    = "vcpip[ALL]",
+  "zic1"     = "zic1[ALL] OR zinc finger protein ZIC1[ALL]"
+)
+
+# Run full grid
+results_list <- list()
+total <- length(target_species) * length(locus_terms)
+counter <- 0
+
+for(sp in target_species) {
+  for(locus in names(locus_terms)) {
+    counter <- counter + 1
+    cat(sprintf("[%d/%d] %s - %s\n", counter, total, sp, locus))
+    
+    query <- paste0('"', sp, '"[ORGN] AND (', locus_terms[[locus]], 
+                    ') AND 200:20000[SLEN]')
+    
+    res <- tryCatch(
+      entrez_search(db="nucleotide", term=query, retmax=10),
+      error=function(e) NULL
+    )
+    
+    Sys.sleep(0.34)
+    
+    if(is.null(res) || res$count == 0) {
+      results_list[[paste(sp, locus)]] <- data.frame(
+        species=sp, locus=locus, accession=NA, length=NA, found=FALSE)
+      next
+    }
+    
+    summ <- tryCatch(
+      entrez_summary(db="nucleotide", id=res$ids),
+      error=function(e) NULL
+    )
+    
+    if(is.null(summ)) {
+      results_list[[paste(sp, locus)]] <- data.frame(
+        species=sp, locus=locus, accession=NA, length=NA, found=FALSE)
+      next
+    }
+    
+    if(length(res$ids) == 1) {
+      best_len <- summ$slen
+      best_id <- res$ids[1]
+    } else {
+      lengths <- sapply(summ, function(x) x$slen)
+      best_idx <- which.max(lengths)
+      best_len <- lengths[best_idx]
+      best_id <- res$ids[best_idx]
+    }
+    
+    results_list[[paste(sp, locus)]] <- data.frame(
+      species=sp, locus=locus,
+      accession=best_id, length=best_len,
+      found=TRUE)
+  }
+}
+
+# Combine
+coverage_ncbi <- do.call(rbind, results_list)
+
+# Save results
+write.csv(coverage_ncbi, "~/Downloads/Boxfish/ncbi_coverage.csv", row.names=FALSE)
+
+# Visualize
+coverage_wide <- coverage_ncbi %>%
+  select(species, locus, found) %>%
+  pivot_wider(names_from=locus, values_from=found, values_fill=FALSE)
+
+# Heatmap
+coverage_long <- coverage_ncbi %>%
+  mutate(locus = factor(locus, levels=names(locus_terms)),
+         species = factor(species, levels=rev(target_species)))
+
+ggplot(coverage_long, aes(x=locus, y=species, fill=found)) +
+  geom_tile(color="white", linewidth=0.5) +
+  scale_fill_manual(values=c("TRUE"="#2d6a4f", "FALSE"="#f0f0f0"),
+                    labels=c("TRUE"="Present", "FALSE"="Absent")) +
+  labs(title="NCBI data availability across taxa and loci",
+       x="", y="", fill="") +
+  theme_minimal() +
+  theme(axis.text.x=element_text(angle=45, hjust=1, size=7),
+        axis.text.y=element_text(face="italic", size=8))
+```
+
+```{r}
+library(tidyverse)
+# What you already have
+already_have <- coverage_ncbi %>%
+  mutate(
+    in_mitogenome = species %in% mito_species & locus %in% c("COI","cytb","16S","12S","ND2","ND4","ND1","ND3","ND4L","ND5","ND6","COX2","COX3","ATP6","ATP8"),
+    in_ftol = species %in% gsub("_"," ", ftol_taxa) & locus %in% c("COI","cytb","16S","12S","ND2","ND4","4c4","enc1","ficd","glyt","hoxc6a","kiaa1239","myh6","panx2","plagl2","ptr","rag1","rag2","rhodopsin","ripk4","sh3px3","sidkey","sreb2","svep1","tbr1","vcpip","zic1"),
+    source = case_when(
+      in_mitogenome ~ "Mitogenome",
+      in_ftol ~ "FToL",
+      found ~ "NCBI only",
+      TRUE ~ "Missing"
+    )
+  )
+
+# Visualize with source
+ggplot(already_have, aes(x=locus, y=species, fill=source)) +
+  geom_tile(color="white", linewidth=0.5) +
+  scale_fill_manual(values=c(
+    "Mitogenome" = "#2d6a4f",
+    "FToL" = "#52b788",
+    "NCBI only" = "#f4a261",
+    "Missing" = "#f0f0f0"
+  )) +
+  labs(title="Data coverage by source", x="", y="", fill="Source") +
+  theme_minimal() +
+  theme(axis.text.x=element_text(angle=45, hjust=1, size=7),
+        axis.text.y=element_text(face="italic", size=8))
+```
+
+```{r}
+# Master taxonomy lookup table
+taxonomy <- data.frame(
+  species_full = c(
+    "Anoplocapros amygdaloides",
+    "Anoplocapros lenticularis",
+    "Anoplocapros inermis",
+    "Strophiurichthys robustus",
+    "Aracana aurita",
+    "Aracana ornata",
+    "Capropygia unistriata",
+    "Kentrocapros aculeatus",
+    "Polyplacapros tyleri",
+    "Acanthostracion guineensis",
+    "Acanthostracion notacanthus",
+    "Acanthostracion polygonius",
+    "Acanthostracion quadricornis",
+    "Lactophrys bicaudalis",
+    "Lactophrys trigonus",
+    "Lactophrys triqueter",
+    "Lactoria cornuta",
+    "Lactoria diaphana",
+    "Lactoria fornasini",
+    "Lactoria paschae",
+    "Ostracion cubicus",
+    "Ostracion cyanurus",
+    "Ostracion immaculatus",
+    "Ostracion meleagris",
+    "Ostracion nasus",
+    "Rhynchostracion rhinorhynchus",
+    "Ostracion solorensis",
+    "Ostracion whitleyi",
+    "Tetrosomus concatenatus",
+    "Tetrosomus gibbosus",
+    "Ostracion reipublicae",
+    "Triodon macropterus"
+  ),
+  
+  species_underscore = NA,  # will fill below
+  
+  morpho_code = c(
+    NA, "Anoplocapros", NA,
+    "Strophiurichthys", "Aracana", NA,
+    "Capropygia", "Kentrocapros", "Polyplacapros",
+    "acant_guin", "acant_nota", "acant_poly", "acant_quad",
+    "lactp_bica", "lactp_trig", "lactp_triq",
+    "lacto_corn", "lacto_diap", "lacto_forn", NA,
+    "ostr_cubic", "ostr_cyanu", NA, "ostr_melea",
+    "ostr_nasus", "Ostr_rhino", NA, "ostr_whitl",
+    "tetr_conca", "tetr_gibbo", "tetr_repub",
+    "Triodon"
+  ),
+  
+  mitogenome_accession = c(
+    NA, "NC_011319.1", NA,
+    NA, NA, NA,
+    NA, "NC_009864.1", NA,
+    NA, NA, "PV662072.1", "PV662073.1",
+    "OP057014.1", "OP035078.2", NA,
+    "NC_057981.1", "NC_011330.1", NA, NA,
+    "NC_072284.1", NA, "NC_009865.1", "OP035246.1",
+    NA, "NC_030005.1", NA, NA,
+    NA, NA, NA,
+    "NC_009859.1"
+  ),
+  
+  ftol_name = c(
+    NA, NA, NA,
+    NA, NA, NA,
+    NA, NA, NA,
+    NA, NA, "Acanthostracion_polygonius", "Acanthostracion_quadricornis",
+    "Lactophrys_bicaudalis", "Lactophrys_trigonus", "Rhinesomus_triqueter",
+    "Lactoria_cornuta", "Lactoria_diaphana", "Tetrosomus_fornasini", NA,
+    "Ostracion_cubicus", NA, "Ostracion_immaculatus", "Ostracion_meleagris",
+    "Rhynchostracion_nasus", "Ostracion_rhinorhynchos", "Ostracion_solorensis", "Ostracion_whitleyi",
+    "Tetrosomus_concatenatus", "Tetrosomus_gibbosus", "Tetrosomus_reipublicae",
+    "Triodon_macropterus"
+  ),
+  
+  family = c(
+    rep("Aracanidae", 9),
+    rep("Ostraciidae", 22),
+    "Triodontidae"
+  ),
+  
+  stringsAsFactors = FALSE
+)
+
+# Fill underscore version
+taxonomy$species_underscore <- gsub(" ", "_", taxonomy$species_full)
+
+# Print
+print(taxonomy)
+
+# Save
+write.csv(taxonomy, "~/Downloads/Boxfish/taxonomy_lookup.csv", row.names=FALSE)
+```
+
