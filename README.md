@@ -35,3 +35,118 @@ What have we done so far?
     5. 4 independent chains × 20M generations, 25% burnin
     6. ESS 66-123 — below 200 threshold, longer runs needed
     7. MCC tree summarised with TreeAnnotator, stored in `/beast_MCC.tre`
+
+Boxfish/
+│
+├── archive/                          ← Old/superseded work, kept for reference
+│   ├── _FScript_TINA.R               ← Early R script (draft version)
+│   ├── FScript_TINA.R                ← Early R script (cleaner version)
+│   ├── modifying branch lengths.R    ← R script for manual tree editing
+│   ├── comparative_boxfish_phylogeny.phy  ← Old phylip alignment
+│   ├── timeCalibratedFull.phy        ← Old time-calibrated tree
+│   ├── USE_THIS_TINA_timeCalibratedFull.phy  ← Final version of above
+│   ├── Ostracioidea_K95_WT83.nex     ← Old morphological nexus matrix
+│   ├── Ostracioidea_K95_WT83.nex copy
+│   ├── Ostracioidea_K95_WT83.nex.tree
+│   ├── muscle_results/               ← Old MUSCLE alignment run outputs
+│   │   └── muscle-I20260206-*.*      ← Alignment, pairwise identity, tree files
+│   └── individual_seqs/              ← Manually downloaded individual NCBI sequences
+│       └── Genus_species_LOCUS_ACCESSION.fasta
+│
+├── beast/                            ← BEAST2 Bayesian analysis files
+│   ├── boxfish_beast.xml             ← BEAST input: model, partitions, priors, taxa
+│   ├── testbeast.xml                 ← Test/trial XML before final run
+│   ├── chain_1-4_$(boxfish).log      ← MCMC parameter logs per chain (~140MB each, not on GitHub)
+│   ├── chain_1-4_$(boxfish).trees    ← Posterior tree samples per chain (not on GitHub)
+│   ├── combined.trees                ← All 4 chains merged (not on GitHub)
+│   ├── combined_25.trees             ← 25% burnin removed, ready for analysis (not on GitHub)
+│   ├── beast_MCC.tre                 ← ★ Final MCC consensus tree (main result)
+│   └── boxfish_total.con.tre         ← Total evidence consensus tree
+│
+├── docs/                             ← Project documents and metadata
+│   ├── boxfish_sp_list.xlsx          ← Master species list
+│   ├── ~$boxfish_sp_list.xlsx        ← Excel temp file (can delete)
+│   ├── overview_species_drag_dataset.xlsx  ← Data coverage overview per species
+│   ├── ncbi_coverage.csv             ← NCBI sequence availability per species/locus
+│   ├── taxonomy_lookup.csv           ← Taxonomy reference table
+│   └── Boxfish Phylogenetic Methods paper copy.pdf  ← Reference paper
+│
+├── ftol/                             ← Fish Tree of Life sequences & IQ-TREE analysis
+│   ├── Ostraciidae.nex               ← Boxfish subset from FTOL (nexus)
+│   ├── Ostraciidae.phylip            ← Same, phylip format
+│   ├── Ostraciidae_with_triodon.phylip  ← With outgroup added
+│   ├── final_alignment.phylip        ← Final FTOL alignment used (~268MB, not on GitHub)
+│   ├── final_alignment.partitions    ← Partition scheme for FTOL alignment
+│   └── nuclear_iqtree.treefile       ← ★ IQ-TREE result from nuclear-only FTOL data
+│
+├── lastz_out/                        ← Pairwise alignments of mitogenomes vs reference
+│   └── Genus_species_*_vs_ref.maf    ← LASTZ output: each mitogenome vs O. immaculatus ref
+│
+├── loci/                             ← All sequence data organized by locus and source
+│   │
+│   ├── ncbi_mito/                    ← Raw mito loci downloaded from NCBI GenBank
+│   │   └── [locus]_ncbi.fa           ← 12S, 16S, COI, cytb, ND1-6, ATP6/8, COX2/3
+│   │
+│   ├── ncbi_nuclear/                 ← Raw nuclear loci downloaded from NCBI GenBank
+│   │   └── [locus]_ncbi.fa           ← RAG1, MYH6, rhodopsin, ZIC1, etc.
+│   │
+│   ├── mito_extracted/               ← Mito loci extracted from YOUR assembled mitogenomes
+│   │   └── [locus]_mito.fa           ← Same 15 loci, from mitogenome FASTAs
+│   │
+│   ├── ftol_mito/                    ← Mito loci sourced from Fish Tree of Life
+│   │   └── 12s, 16s, coi, cytb, nd2, nd4 (subset available in FTOL)
+│   │
+│   ├── ftol_nuclear/                 ← Nuclear loci sourced from Fish Tree of Life
+│   │   └── 22 loci (superset of ncbi_nuclear — some only in FTOL)
+│   │
+│   ├── merged/                       ← NCBI + extracted + FTOL combined per locus
+│   │   ├── mito/[locus].fa           ← All sources merged, one file per mito locus
+│   │   └── nuclear/[locus].fa        ← All sources merged, one file per nuclear locus
+│   │
+│   └── aligned/                      ← ★ Final aligned sequences ready for analysis
+│       ├── mito/[locus]_aligned.fa   ← 15 mito loci aligned (MAFFT/MUSCLE)
+│       └── nuclear/[locus]_aligned.fa ← 16 nuclear loci aligned
+│
+├── matrices/
+│   └── morph_matrix                  ← Raw morphological character matrix
+│
+├── mitogenomes/                      ← Complete mitogenome FASTAs
+│   ├── Genus_species_ACCESSION.fasta ← 13 mitogenomes used in analysis
+│   ├── all_mitogenomes_aligned.fasta ← All mitogenomes aligned (full length)
+│   ├── Ostracion_immaculatus_Ref_*   ← Reference mitogenome (used for LASTZ, extraction)
+│   ├── additional_samples/           ← Extra mitogenomes not in main analysis
+│   │   └── duplicates, old versions, extras
+│   └── preliminary_files/            ← Early mitogenome alignment attempts
+│       └── all_mitogenomes.fasta, .nex, total_evidence.nex
+│
+├── morpho/
+│   └── Ostracioidea_K95_WT83.nex     ← ★ Morphological matrix used in total evidence analysis
+│
+├── r_cache/                          ← Cached R objects (speeds up re-running scripts)
+│   ├── ftol_full.rds                 ← Cached full FTOL dataset
+│   └── ncbi_results.rds              ← Cached NCBI query results
+│
+├── reference/                        ← Reference genome for alignment/annotation
+│   ├── Ostracion_immaculatus_Ref_mitogenome_NC_009865.1.fa   ← Reference FASTA
+│   └── Ostracion_immaculatus_Ref_mitogenome_NC_009865.1.gb   ← GenBank annotation file
+│
+├── results/                          ← ★ Figures and analysis scripts (presentable outputs)
+│   ├── boxfish_data.qmd              ← R/Quarto script: data assembly & coverage analysis
+│   ├── boxfishscript.qmd             ← R/Quarto script: main analysis & figures
+│   ├── beast_tree_1.png              ← BEAST MCC tree figure
+│   ├── iqtree_astral_tree_1.png      ← IQ-TREE / ASTRAL tree figure
+│   └── data_coverage_by_source.png   ← Heatmap of data availability per species/locus
+│
+├── supermatrix/                      ← ★ Final concatenated matrices fed into BEAST
+│   ├── supermatrix_26taxa.nex        ← Combined molecular + morpho matrix (26 taxa)
+│   ├── molecular_26taxa.nex          ← Molecular partition only
+│   ├── morpho_26taxa.nex             ← Morphological partition only
+│   ├── supermatrix.nex               ← Earlier version
+│   └── partitions.txt                ← Partition scheme: which bp = which locus/model
+│
+└── trees/                            ← ★ All final tree outputs
+    ├── beast_MCC.tre                 ← (copy) Bayesian time-calibrated tree
+    ├── boxfish_mito_iqtree.treefile  ← IQ-TREE mitogenome-only ML tree
+    ├── astral_species_tree_final.tre ← ASTRAL coalescent species tree
+    ├── boxfish_total.con.tre         ← Total evidence consensus
+    └── morpho_topology.tre           ← Morphology-only topology
