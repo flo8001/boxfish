@@ -35,7 +35,7 @@ What have we done so far?
     5. 4 independent chains × 20M generations, 25% burnin
     6. ESS 66-123 — below 200 threshold, longer runs needed
     7. MCC tree summarised with TreeAnnotator, stored in `/beast_MCC.tre`
-
+```
 Boxfish/
 │
 ├── archive/                          ← Old/superseded work, kept for reference
@@ -150,3 +150,4 @@ Boxfish/
     ├── astral_species_tree_final.tre ← ASTRAL coalescent species tree
     ├── boxfish_total.con.tre         ← Total evidence consensus
     └── morpho_topology.tre           ← Morphology-only topology
+```
