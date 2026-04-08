@@ -348,8 +348,8 @@ print(morpho_mp)
 plot(morpho_mp, main = "Unrooted morpho parsimony tree")
 
 plot(morpho_mp, 
-     type = "unrooted", 
-     main = "Unrooted Morpho Parsimony Tree",
+     type = "rooted", 
+     main = "rooted Morpho Parsimony Tree",
      cex = 0.7,
      lab4ut = "axial") 
 nodelabels(morpho_mp$node.label, cex=0.5, frame="none")
@@ -1651,6 +1651,6 @@ taxonomy$species_underscore <- gsub(" ", "_", taxonomy$species_full)
 print(taxonomy)
 
 # Save
-write.csv(taxonomy, "~/Downloads/Boxfish/taxonomy_lookup.csv", row.names=FALSE)
+#write.csv(taxonomy, "~/Downloads/Boxfish/taxonomy_lookup.csv", row.names=FALSE)
 ```
 
