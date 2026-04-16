@@ -1,4 +1,4 @@
-What have we done so far?
+Done so far:
 1. Inspected morphological matrix digitized by Santini, pulled from Winterbottom & Tyler 1983 and Klassen 1995 `/morpho/Ostracioidea_K95_WT83.nex`
 2. Manually downloaded mitogenomes from NCBI Genbank `/mitogenomes`
 	1. aligned to reference mitogenome = `Ostracion_immaculatus_Ref_mitogenome_NC_009865.1` using LASTZ `/mitogenomes/all_mitogenomes_aligned.fasta`
@@ -35,6 +35,12 @@ What have we done so far?
     5. 4 independent chains × 20M generations, 25% burnin
     6. ESS 66-123 — below 200 threshold, longer runs needed
     7. MCC tree summarised with TreeAnnotator, stored in `/beast_MCC.tre`
+   
+Currently:
+Checking over BEAST tree with Tracer
+
+Next Steps:
+Finalize tree and share results
 ```
 Boxfish/
 │
