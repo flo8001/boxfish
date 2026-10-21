@@ -1,159 +1,169 @@
-Done so far:
-1. Inspected morphological matrix digitized by Santini, pulled from Winterbottom & Tyler 1983 and Klassen 1995 `/morpho/Ostracioidea_K95_WT83.nex`
-2. Manually downloaded mitogenomes from NCBI Genbank `/mitogenomes`
-	1. aligned to reference mitogenome = `Ostracion_immaculatus_Ref_mitogenome_NC_009865.1` using LASTZ `/mitogenomes/all_mitogenomes_aligned.fasta`
-	2. outgroup = `Triodon_macropterus_mitogenome_NC_009859.1`
-3. Downloaded FToL mtDNA and nuDNA loci data `/ftol`
-	1. extracted loci using partition coordinates `/loci/ftol_mito`, `/loci/ftol_nuclear`
-4. Conducted rentrez search on NCBI for all mtDNA and nuDNA loci data
-	1. stored in `/loci/ncbi_mito`, `/loci/ncbi_nuclear`
-5. Extracted individual mitochondrial loci from each mitogenome using LASTZ pairwise alignments against _O. immaculatus_ reference
-    1. Gene coordinates parsed from reference GenBank file `/reference/Ostracion_immaculatus_Ref_mitogenome_NC_009865.1.gb`
-    2. Extracted sequences stored in `/loci/mito_extracted/`
-6. Merged all three data sources (mitogenome extracted, FToL, NCBI) into per-locus fastas with priority: mitogenome > longest of FToL or NCBI
-    1. Rich headers added to each sequence recording source, accession number, and sequence length
-    2. Merged fastas stored in `/loci/merged/mito/` and `/loci/merged/nuclear/`
-7. Aligned merged per-locus fastas using MAFFT (`--auto --adjustdirectionaccurately`) on Hoffman2
-    1. Taxa with <50 real bases filtered out before alignment
-    2. Missing taxa added back as `?` strings after alignment to ensure all 26 taxa present in every locus file
-    3. Aligned fastas stored in `/loci/aligned/mito/` and `/loci/aligned/nuclear/`
-8. Built total evidence supermatrix concatenating all 27 aligned loci + morphological matrix
-    1. 26 taxa × 27,410 characters (27,290 molecular + 120 morphological)
-    2. Mean missing data 63.5%
-    3. Stored in `/supermatrix/`
-9. Per-locus maximum likelihood gene trees inferred with IQ-TREE2 (GTR+G, 1000 ultrafast bootstraps) on Hoffman2
-    1. 27/31 loci produced trees (4c4, ficd, hoxc6a, kiaa1239 skipped — insufficient taxa)
-    2. Gene trees stored in `/gene_trees/`
-10. Coalescent species tree inferred with ASTRAL from 27 gene trees
-    1. `_R_` prefix artefacts from MAFFT reverse-complementing removed before running
-    2. Stored in `/trees/astral_species_tree_final.tre`
-11. Total evidence Bayesian timetree inferred with BEAST2 on Hoffman2
-    1. 31 molecular partitions (GTR+G) + morphological partition (Lewis Mk)
-    2. Separate UCLN relaxed clocks for mtDNA and nuDNA, strict clock for morphology
-    3. Birth Death tree prior
-    4. 3 fossil calibrations: _Ctenoplectus williamsi_ (53.7 Ma, root), _Eolactoria sorbinii_ (49 Ma, total Ostraciidae), _Oligolactoria bubiki_ (30.28 Ma, crown Ostraciidae)
-    5. 4 independent chains × 20M generations, 25% burnin
-    6. ESS 66-123 — below 200 threshold, longer runs needed
-    7. MCC tree summarised with TreeAnnotator, stored in `/beast_MCC.tre`
-   
-Currently:
-Checking over BEAST tree with Tracer
+# Boxfish (Ostracioidea) Total Evidence Phylogenomics
 
-Next Steps:
-Finalize tree and share results
+Time-calibrated total evidence phylogeny of boxfishes (Ostraciidae + Aracanidae) with *Triodon macropterus* as outgroup, inferred using BEAST2 from molecular and morphological data with fossil calibrations.
+
+**Final result:** `results/run4_beast_MCC_CA.tre` — 30 taxa, root age 64.8 Ma
+
+---
+
+## Taxa
+
+30 total: 26 with molecular data + 4 morphology-only (*Acanthostracion guineensis*, *A. notacanthus*, *Ostracion cyanurus*, *Polyplacapros tyleri*). Outgroup: *Triodon macropterus*.
+
+6 taxa excluded from molecular analysis (>95% missing data) but included via morphology only.
+
+---
+
+## Pipeline
+
+### 1. Morphological matrix
+- 120 characters, 26 taxa, digitized from Winterbottom & Tyler (1983) and Klassen (1995)
+- `data/morpho/Ostracioidea_K95_WT83.nex`
+
+### 2. Mitogenomes
+- 13 complete mitogenomes downloaded from NCBI GenBank
+- `data/mitogenomes/`
+- Outgroup: *Triodon macropterus* (NC_009859.1)
+- Reference: *Ostracion immaculatus* (NC_009865.1) — `reference/`
+
+### 3. Mitochondrial locus extraction
+- Each mitogenome aligned pairwise against reference using LASTZ
+- LASTZ output MAF files: `analyses/lastz_out/`
+- Gene coordinates parsed from reference GenBank annotation (`reference/*.gb`)
+- 15 mito loci extracted per mitogenome: `data/loci/mito_extracted/`
+
+### 4. Sequence data compilation
+Three sources combined per locus with priority: **mitogenome extracted > longer of FToL or NCBI**
+
+| Source | Location |
+|--------|----------|
+| Mitogenome-extracted loci | `data/loci/mito_extracted/` |
+| Fish Tree of Life (FToL) mito loci | `data/loci/ftol_mito/` |
+| Fish Tree of Life (FToL) nuclear loci | `data/loci/ftol_nuclear/` |
+| NCBI GenBank mito loci (rentrez) | `data/loci/ncbi_mito/` |
+| NCBI GenBank nuclear loci (rentrez) | `data/loci/ncbi_nuclear/` |
+| Merged per-locus fastas | `data/loci/merged/` |
+
+NCBI sequences >10 kb filtered (to exclude accidental full mitogenomes).
+
+### 5. Alignment
+- All 31 loci aligned with MAFFT (`--auto --adjustdirectionaccurately`) on Hoffman2 HPC
+- Taxa with <50 real bases removed before alignment
+- Missing taxa added back as `?` strings post-alignment (all 30 taxa present in every file)
+- `_R_` prefix artefacts from MAFFT reverse-complementing removed before downstream use
+- Aligned fastas: `data/loci/aligned/mito/` (15 loci) and `data/loci/aligned/nuclear/` (16 loci)
+
+### 6. Supermatrix
+- 30 taxa × 27,410 characters: 27,290 molecular (31 loci) + 120 morphological
+- `analyses/beast/supermatrix/molecular_30taxa.nex`, `morpho_30taxa.nex`, `partitions.txt`
+
+### 7. IQ-TREE gene trees
+- GTR+G, 1000 ultrafast bootstraps, run on Hoffman2
+- 27/31 loci produced trees (4c4, ficd, hoxc6a, kiaa1239 skipped — <4 taxa)
+- Gene trees stored on Hoffman2: `~/boxfish/gene_trees/*.treefile`
+
+### 8. ASTRAL coalescent species tree
+- Input: 27 gene trees
+- Output: `analyses/trees/astral_species_tree_final.tre`
+- Root age ~55 Ma (unrooted; rooted on *Triodon* in R)
+
+### 9. BEAST2 total evidence timetree (Run 4 — final)
+
+**Model:**
+- 31 molecular partitions: GTR+G (unlinked site models)
+- 1 morphological partition: Lewis Mk (stateNumber=4, MM package)
+- mtDNA partitions: UCLN relaxed clock (linked across 15 partitions)
+- nuDNA partitions: UCLN relaxed clock (linked across 16 partitions)
+- Morphology: strict clock
+- Tree prior: Birth-Death (Gernhard 2008)
+
+**Fossil calibrations:**
+
+| Calibration | Fossil | Prior | Node |
+|-------------|--------|-------|------|
+| Root | *Ctenoplectus williamsi* | Uniform(53.7–120 Ma) | All 30 taxa |
+| Total Ostraciidae | *Eolactoria sorbinii* | LogNormal offset=49.0 Ma | 29 taxa excl. *Triodon*, monophyletic |
+| Crown Ostraciidae | *Oligolactoria bubiki* | LogNormal offset=30.28 Ma | 21 taxa |
+
+**Run details:**
+- 4 independent chains × 50M generations (run in 2 × 25M blocks on Hoffman2)
+- logEvery=1000, storeEvery=2000
+- XML: `analyses/beast/boxfish_beast_30taxa_v2.xml`
+- Chains and logs not tracked in git (large files) — stored on Hoffman2 at `~/boxfish/run4/`
+
+**Convergence:**
+- 25% burnin applied in LogCombiner
+- Combined ESS: posterior=385, prior=350, likelihood=907, morpho=318 — all >200 ✓
+- Tracer diagnostics: `results/run4-beast-tracer.pdf`, `results/run4-beast-tracer-datatable`
+
+**Result:**
+- Root age: **64.8 Ma** (K-Pg boundary)
+- Aracanidae and Ostraciidae monophyletic ✓
+- *Triodon* correctly placed as outgroup (posterior=1.0) ✓
+- MCC tree: `results/run4_beast_MCC_CA.tre`
+- Figure: `results/beast-run-4-tree-fig.png`
+
+---
+
+## Repository Structure
+
 ```
 Boxfish/
-│
-├── archive/                          ← Old/superseded work, kept for reference
-│   ├── _FScript_TINA.R               ← Early R script (draft version)
-│   ├── FScript_TINA.R                ← Early R script (cleaner version)
-│   ├── modifying branch lengths.R    ← R script for manual tree editing
-│   ├── comparative_boxfish_phylogeny.phy  ← Old phylip alignment
-│   ├── timeCalibratedFull.phy        ← Old time-calibrated tree
-│   ├── USE_THIS_TINA_timeCalibratedFull.phy  ← Final version of above
-│   ├── Ostracioidea_K95_WT83.nex     ← Old morphological nexus matrix
-│   ├── Ostracioidea_K95_WT83.nex copy
-│   ├── Ostracioidea_K95_WT83.nex.tree
-│   ├── muscle_results/               ← Old MUSCLE alignment run outputs
-│   │   └── muscle-I20260206-*.*      ← Alignment, pairwise identity, tree files
-│   └── individual_seqs/              ← Manually downloaded individual NCBI sequences
-│       └── Genus_species_LOCUS_ACCESSION.fasta
-│
-├── beast/                            ← BEAST2 Bayesian analysis files
-│   ├── boxfish_beast.xml             ← BEAST input: model, partitions, priors, taxa
-│   ├── testbeast.xml                 ← Test/trial XML before final run
-│   ├── chain_1-4_$(boxfish).log      ← MCMC parameter logs per chain (~140MB each, not on GitHub)
-│   ├── chain_1-4_$(boxfish).trees    ← Posterior tree samples per chain (not on GitHub)
-│   ├── combined.trees                ← All 4 chains merged (not on GitHub)
-│   ├── combined_25.trees             ← 25% burnin removed, ready for analysis (not on GitHub)
-│   ├── beast_MCC.tre                 ← ★ Final MCC consensus tree (main result)
-│   └── boxfish_total.con.tre         ← Total evidence consensus tree
-│
-├── docs/                             ← Project documents and metadata
-│   ├── boxfish_sp_list.xlsx          ← Master species list
-│   ├── ~$boxfish_sp_list.xlsx        ← Excel temp file (can delete)
-│   ├── overview_species_drag_dataset.xlsx  ← Data coverage overview per species
-│   ├── ncbi_coverage.csv             ← NCBI sequence availability per species/locus
-│   ├── taxonomy_lookup.csv           ← Taxonomy reference table
-│   └── Boxfish Phylogenetic Methods paper copy.pdf  ← Reference paper
-│
-├── ftol/                             ← Fish Tree of Life sequences & IQ-TREE analysis
-│   ├── Ostraciidae.nex               ← Boxfish subset from FTOL (nexus)
-│   ├── Ostraciidae.phylip            ← Same, phylip format
-│   ├── Ostraciidae_with_triodon.phylip  ← With outgroup added
-│   ├── final_alignment.phylip        ← Final FTOL alignment used (~268MB, not on GitHub)
-│   ├── final_alignment.partitions    ← Partition scheme for FTOL alignment
-│   └── nuclear_iqtree.treefile       ← ★ IQ-TREE result from nuclear-only FTOL data
-│
-├── lastz_out/                        ← Pairwise alignments of mitogenomes vs reference
-│   └── Genus_species_*_vs_ref.maf    ← LASTZ output: each mitogenome vs O. immaculatus ref
-│
-├── loci/                             ← All sequence data organized by locus and source
-│   │
-│   ├── ncbi_mito/                    ← Raw mito loci downloaded from NCBI GenBank
-│   │   └── [locus]_ncbi.fa           ← 12S, 16S, COI, cytb, ND1-6, ATP6/8, COX2/3
-│   │
-│   ├── ncbi_nuclear/                 ← Raw nuclear loci downloaded from NCBI GenBank
-│   │   └── [locus]_ncbi.fa           ← RAG1, MYH6, rhodopsin, ZIC1, etc.
-│   │
-│   ├── mito_extracted/               ← Mito loci extracted from YOUR assembled mitogenomes
-│   │   └── [locus]_mito.fa           ← Same 15 loci, from mitogenome FASTAs
-│   │
-│   ├── ftol_mito/                    ← Mito loci sourced from Fish Tree of Life
-│   │   └── 12s, 16s, coi, cytb, nd2, nd4 (subset available in FTOL)
-│   │
-│   ├── ftol_nuclear/                 ← Nuclear loci sourced from Fish Tree of Life
-│   │   └── 22 loci (superset of ncbi_nuclear — some only in FTOL)
-│   │
-│   ├── merged/                       ← NCBI + extracted + FTOL combined per locus
-│   │   ├── mito/[locus].fa           ← All sources merged, one file per mito locus
-│   │   └── nuclear/[locus].fa        ← All sources merged, one file per nuclear locus
-│   │
-│   └── aligned/                      ← ★ Final aligned sequences ready for analysis
-│       ├── mito/[locus]_aligned.fa   ← 15 mito loci aligned (MAFFT/MUSCLE)
-│       └── nuclear/[locus]_aligned.fa ← 16 nuclear loci aligned
-│
-├── matrices/
-│   └── morph_matrix                  ← Raw morphological character matrix
-│
-├── mitogenomes/                      ← Complete mitogenome FASTAs
-│   ├── Genus_species_ACCESSION.fasta ← 13 mitogenomes used in analysis
-│   ├── all_mitogenomes_aligned.fasta ← All mitogenomes aligned (full length)
-│   ├── Ostracion_immaculatus_Ref_*   ← Reference mitogenome (used for LASTZ, extraction)
-│   ├── additional_samples/           ← Extra mitogenomes not in main analysis
-│   │   └── duplicates, old versions, extras
-│   └── preliminary_files/            ← Early mitogenome alignment attempts
-│       └── all_mitogenomes.fasta, .nex, total_evidence.nex
-│
-├── morpho/
-│   └── Ostracioidea_K95_WT83.nex     ← ★ Morphological matrix used in total evidence analysis
-│
-├── r_cache/                          ← Cached R objects (speeds up re-running scripts)
-│   ├── ftol_full.rds                 ← Cached full FTOL dataset
-│   └── ncbi_results.rds              ← Cached NCBI query results
-│
-├── reference/                        ← Reference genome for alignment/annotation
-│   ├── Ostracion_immaculatus_Ref_mitogenome_NC_009865.1.fa   ← Reference FASTA
-│   └── Ostracion_immaculatus_Ref_mitogenome_NC_009865.1.gb   ← GenBank annotation file
-│
-├── results/                          ← ★ Figures and analysis scripts (presentable outputs)
-│   ├── boxfish_data.qmd              ← R/Quarto script: data assembly & coverage analysis
-│   ├── boxfishscript.qmd             ← R/Quarto script: main analysis & figures
-│   ├── beast_tree_1.png              ← BEAST MCC tree figure
-│   ├── iqtree_astral_tree_1.png      ← IQ-TREE / ASTRAL tree figure
-│   └── data_coverage_by_source.png   ← Heatmap of data availability per species/locus
-│
-├── supermatrix/                      ← ★ Final concatenated matrices fed into BEAST
-│   ├── supermatrix_26taxa.nex        ← Combined molecular + morpho matrix (26 taxa)
-│   ├── molecular_26taxa.nex          ← Molecular partition only
-│   ├── morpho_26taxa.nex             ← Morphological partition only
-│   ├── supermatrix.nex               ← Earlier version
-│   └── partitions.txt                ← Partition scheme: which bp = which locus/model
-│
-└── trees/                            ← ★ All final tree outputs
-    ├── beast_MCC.tre                 ← (copy) Bayesian time-calibrated tree
-    ├── boxfish_mito_iqtree.treefile  ← IQ-TREE mitogenome-only ML tree
-    ├── astral_species_tree_final.tre ← ASTRAL coalescent species tree
-    ├── boxfish_total.con.tre         ← Total evidence consensus
-    └── morpho_topology.tre           ← Morphology-only topology
+├── analyses/
+│   ├── beast/
+│   │   ├── boxfish_beast_30taxa_v2.xml   ← BEAST XML (current)
+│   │   ├── prior_v2_MCC.tre              ← Prior-only run (monophyletic + uniform root)
+│   │   ├── run4/                         ← Chain logs & combined trees (not on GitHub)
+│   │   └── supermatrix/                  ← molecular_30taxa.nex, morpho_30taxa.nex, partitions.txt
+│   ├── lastz_out/                        ← LASTZ MAF files (mitogenomes vs reference)
+│   └── trees/
+│       └── astral_species_tree_final.tre ← ASTRAL coalescent species tree
+├── data/
+│   ├── loci/
+│   │   ├── aligned/                      ← ★ Final per-locus alignments (mito + nuclear)
+│   │   ├── merged/                       ← Pre-alignment merged fastas
+│   │   ├── mito_extracted/               ← Loci extracted from mitogenomes via LASTZ
+│   │   ├── ftol_mito/ & ftol_nuclear/    ← Raw FToL source sequences
+│   │   └── ncbi_mito/ & ncbi_nuclear/    ← Raw NCBI source sequences
+│   ├── mitogenomes/                      ← Raw mitogenome FASTAs (13 taxa + outgroup)
+│   └── morpho/
+│       └── Ostracioidea_K95_WT83.nex     ← Morphological matrix
+├── docs/                                 ← Species lists, coverage tables, taxonomy
+├── literature/                           ← Reference PDFs
+├── reference/                            ← O. immaculatus reference mitogenome (.fa + .gb)
+├── results/                              ← ★ Final outputs
+│   ├── run4_beast_MCC_CA.tre             ← Final MCC tree
+│   ├── beast-run-4-tree-fig.png          ← Tree figure
+│   ├── run4-beast-tracer.pdf             ← MCMC convergence diagnostics
+│   └── run4-beast-tracer-datatable       ← ESS values per parameter
+├── scripts/
+│   └── boxfish_analysis_refactored.R     ← R script for tree visualization
+└── archive/                              ← Superseded files from earlier runs
 ```
+
+---
+
+## Software
+
+| Tool | Version | Use |
+|------|---------|-----|
+| LASTZ | 1.04 | Mitogenome pairwise alignment |
+| MAFFT | 7.x | Per-locus multiple sequence alignment |
+| IQ-TREE2 | 2.x | ML gene trees |
+| ASTRAL | 5.7 | Coalescent species tree |
+| BEAST2 | 2.7.7 | Bayesian total evidence timetree |
+| LogCombiner | 2.7.7 | Chain merging + burnin |
+| TreeAnnotator | 2.7.7 | MCC tree summarization |
+| R (ape, ggtree) | — | Tree visualization |
+
+Molecular analyses run on UCLA Hoffman2 HPC cluster. Job scripts available at `~/boxfish/` on Hoffman2.
+
+---
+
+## Key References
+
+- Winterbottom R, Tyler JC (1983) Morphological matrix
+- Klassen GJ (1995) Morphological matrix
+- *Ctenoplectus williamsi* — root calibration (53.7 Ma)
+- *Eolactoria sorbinii* — total Ostraciidae calibration (49.0 Ma)
+- *Oligolactoria bubiki* — crown Ostraciidae calibration (30.28 Ma)
