@@ -1,0 +1,231 @@
+---
+title: "Untitled"
+format: html
+---
+
+```{r}
+library(ape)
+library(treeio)
+library(ggtree)
+library(ggplot2)
+
+beast_tree_run3 <- read.beast("~/Downloads/Boxfish/beast/run3_beast_MCC_CA.tre")
+beast_tree_run3@phylo <- root(beast_tree_run3@phylo, "Triodon_macropterus", resolve.root = TRUE)
+beast_tree_run3@phylo$tip.label <- gsub("_", " ", beast_tree_run3@phylo$tip.label)
+
+root_age <- max(node.depth.edgelength(as.phylo(beast_tree_run3)))
+cat("Root age:", root_age, "Ma\n")
+
+ggtree(beast_tree_run3, right = TRUE) +
+  geom_tiplab(fontface = "italic", size = 3) +
+  geom_nodelab(aes(label = round(posterior, 2)),
+               size = 2, hjust = 1.5, vjust = -0.6) +
+  theme_tree2() +
+  scale_x_continuous(
+    breaks = seq(0, root_age, by = 10),
+    labels = function(x) round(root_age - x, 0),
+    name   = "Million years ago (Ma)",
+    limits = c(0, root_age + 35)
+  ) +
+  geom_vline(xintercept = root_age - c(23, 34, 56),
+             linetype = "dashed", alpha = 0.3, colour = "grey50") +
+  annotate("text", x = root_age - c(23, 34, 56), y = 3,
+           label = c("Miocene", "Oligocene", "Eocene"),
+           size = 2.5, angle = 90, vjust = -0.3, colour = "grey40") +
+  labs(title = "BEAST total evidence timetree (30 taxa, ~60M generations)")
+ # geom_range(range = "height_0.95_HPD", color = "steelblue", alpha = 0.3, size = 2)
+```
+
+```{r}
+library(tidyverse)
+# Check root node annotations
+beast_tree_run3@data |> 
+  filter(node == length(beast_tree_run3@phylo$tip.label) + 1) |>
+  select(height, height_0.95_HPD)
+
+beast_tree_run3@data |> 
+  filter(node == length(beast_tree_run3@phylo$tip.label) + 1) |>
+  pull(height_0.95_HPD)
+
+root_age
+# Find root node number
+root_node <- length(beast_tree_run3@phylo$tip.label) + 1
+
+# Check its height and HPD
+beast_tree_run3@data |>
+  filter(node == root_node) |>
+  select(node, height, height_0.95_HPD, posterior)
+```
+
+```{r}
+ggtree(beast_tree_run3, right = TRUE) +
+  geom_tiplab(fontface = "italic", size = 3) +
+  geom_nodelab(aes(label = round(posterior, 2)),
+               size = 2, hjust = 1.5, vjust = -0.6) +
+  theme_tree2() +
+  scale_x_continuous(
+    breaks = seq(0, root_age, by = 10),
+    labels = function(x) round(root_age - x, 0),
+    name   = "Million years ago (Ma)",
+    limits = c(0, root_age + 35)
+  ) +
+  geom_vline(xintercept = root_age - c(23, 34, 56, 66),
+             linetype = "dashed", alpha = 0.3, colour = "grey50") +
+  annotate("text", x = root_age - c(23, 34, 56, 66), y = 3,
+           label = c("Miocene", "Oligocene", "Eocene", "K-Pg"),
+           size = 2.5, angle = 90, vjust = -0.3, colour = "grey40") +
+  labs(title = "BEAST total evidence timetree (30 taxa, ~60M generations)")
+```
+
+```{r}
+library(ape)
+phyl <- as.phylo(beast_tree_run3)
+cat("Root node number:", phyl$Nnode + length(phyl$tip.label) - (phyl$Nnode - 1), "\n")
+cat("Root node:", Ntip(phyl) + 1, "\n")
+beast_tree_run3@data |>
+  arrange(desc(height)) |>
+  select(node, height, posterior) |>
+  head(20)
+```
+```{r}
+# Check which node is the root
+library(ape)
+phyl <- as.phylo(beast_tree_run3)
+cat("Root node number:", phyl$Nnode + length(phyl$tip.label) - (phyl$Nnode - 1), "\n")
+
+# Or simply
+cat("Root node:", Ntip(phyl) + 1, "\n")
+```
+
+```{r}
+ggtree(beast_tree_run3, right = TRUE) +
+  geom_range(range = "height_0.95_HPD", color = "steelblue", 
+             alpha = 0.3, size = 2) +
+  geom_tiplab(fontface = "italic", size = 3) +
+  geom_nodelab(aes(label = round(posterior, 2)),
+               size = 2, hjust = 1.5, vjust = -0.6) +
+  theme_tree2() +
+  scale_x_continuous(
+    breaks = seq(0, root_age, by = 10),
+    labels = function(x) round(root_age - x, 0),
+    name   = "Million years ago (Ma)",
+    limits = c(0, root_age + 35)
+  ) +
+  geom_vline(xintercept = root_age - c(23, 34, 56, 66),
+             linetype = "dashed", alpha = 0.3, colour = "grey50") +
+  annotate("text", x = root_age - c(23, 34, 56, 66), y = 3,
+           label = c("Miocene", "Oligocene", "Eocene", "K-Pg"),
+           size = 2.5, angle = 90, vjust = -0.3, colour = "grey40") +
+  labs(title = "BEAST total evidence timetree (30 taxa, ~60M generations)")
+```
+
+```{r}
+prior_tree <- read.beast("~/Downloads/Boxfish/beast/prior_MCC.tre")
+prior_tree@phylo <- root(prior_tree@phylo, "Triodon_macropterus", resolve.root = TRUE)
+prior_tree@phylo$tip.label <- gsub("_", " ", prior_tree@phylo$tip.label)
+
+root_age_prior <- max(node.depth.edgelength(as.phylo(prior_tree)))
+cat("Prior-only root age:", root_age_prior, "Ma\n")
+
+ggtree(prior_tree, right = TRUE) +
+  geom_tiplab(fontface = "italic", size = 3) +
+  geom_range(range = "height_0.95_HPD", color = "steelblue", alpha = 0.3, size = 2) +
+  theme_tree2() +
+  scale_x_continuous(
+    breaks = seq(0, root_age_prior, by = 10),
+    labels = function(x) round(root_age_prior - x, 0),
+    name   = "Million years ago (Ma)",
+    limits = c(0, root_age_prior + 35)
+  ) +
+  labs(title = "Prior-only timetree (no sequence data)")
+```
+```{r}
+library(ape)
+library(treeio)
+library(ggtree)
+library(ggplot2)
+prior_v2_tree <- read.beast("~/Downloads/Boxfish/beast/prior_v2_MCC.tre")
+prior_v2_tree@phylo <- root(prior_v2_tree@phylo, "Triodon_macropterus", resolve.root = TRUE)
+prior_v2_tree@phylo$tip.label <- gsub("_", " ", prior_v2_tree@phylo$tip.label)
+
+root_age_prior_v2 <- max(node.depth.edgelength(as.phylo(prior_v2_tree)))
+cat("Prior v2 root age:", root_age_prior_v2, "Ma\n")
+
+ggtree(prior_v2_tree, right = TRUE) +
+  geom_tiplab(fontface = "italic", size = 3) +
+  geom_range(range = "height_0.95_HPD", color = "steelblue", alpha = 0.3, size = 2) +
+  theme_tree2() +
+  scale_x_continuous(
+    breaks = seq(0, root_age_prior_v2, by = 10),
+    labels = function(x) round(root_age_prior_v2 - x, 0),
+    name   = "Million years ago (Ma)",
+    limits = c(0, root_age_prior_v2 + 10)
+  ) +
+  labs(title = "Prior-only v2 (monophyletic + uniform root constraint)")
+```
+
+```{r}
+library(ape)
+library(treeio)
+library(ggtree)
+library(ggplot2)
+
+beast_tree_run3 <- read.beast("~/Downloads/Boxfish/beast/run3_beast_MCC_CA.tre")
+beast_tree_run3@phylo <- root(beast_tree_run3@phylo, "Triodon_macropterus", resolve.root = TRUE)
+beast_tree_run3@phylo$tip.label <- gsub("_", " ", beast_tree_run3@phylo$tip.label)
+
+root_age <- max(node.depth.edgelength(as.phylo(beast_tree_run3)))
+
+ggtree(beast_tree_run3, right = TRUE) +
+  geom_tiplab(fontface = "italic", size = 3) +
+  geom_range(range = "height_0.95_HPD", color = "steelblue", alpha = 0.3, size = 2) +
+  geom_nodelab(aes(label = round(posterior, 2)),
+               size = 2, hjust = 1.5, vjust = -0.6) +
+  theme_tree2() +
+  scale_x_continuous(
+    breaks = seq(0, root_age, by = 10),
+    labels = function(x) round(root_age - x, 0),
+    name   = "Million years ago (Ma)",
+    limits = c(0, root_age + 35)
+  ) +
+  geom_vline(xintercept = root_age - c(23, 34, 56, 66),
+             linetype = "dashed", alpha = 0.3, colour = "grey50") +
+  annotate("text", x = root_age - c(23, 34, 56, 66), y = 3,
+           label = c("Miocene", "Oligocene", "Eocene", "K-Pg"),
+           size = 2.5, angle = 90, vjust = -0.3, colour = "grey40") +
+  labs(title = "BEAST Run 3 — total evidence timetree (30 taxa, ~60M generations)")
+```
+
+```{r}
+library(ape)
+library(treeio)
+library(ggtree)
+library(ggplot2)
+
+beast_tree_run4 <- read.beast("~/Downloads/Boxfish/beast/run4/run4_beast_MCC_CA.tre")
+beast_tree_run4@phylo <- root(beast_tree_run4@phylo, "Triodon_macropterus", resolve.root = TRUE)
+beast_tree_run4@phylo$tip.label <- gsub("_", " ", beast_tree_run4@phylo$tip.label)
+
+root_age <- max(node.depth.edgelength(as.phylo(beast_tree_run4)))
+cat("Root age:", root_age, "Ma\n")
+
+ggtree(beast_tree_run4, right = TRUE) +
+  geom_tiplab(fontface = "italic", size = 3) +
+  geom_range(range = "height_0.95_HPD", color = "steelblue", alpha = 0.3, size = 2) +
+  geom_nodelab(aes(label = round(posterior, 2)),
+               size = 2, hjust = 1.5, vjust = -0.6) +
+  theme_tree2() +
+  scale_x_continuous(
+    breaks = seq(0, root_age, by = 10),
+    labels = function(x) round(root_age - x, 0),
+    name   = "Million years ago (Ma)",
+    limits = c(0, root_age + 35)
+  ) +
+  geom_vline(xintercept = root_age - c(23, 34, 56, 66),
+             linetype = "dashed", alpha = 0.3, colour = "grey50") +
+  annotate("text", x = root_age - c(23, 34, 56, 66), y = 3,
+           label = c("Miocene", "Oligocene", "Eocene", "K-Pg"),
+           size = 2.5, angle = 90, vjust = -0.3, colour = "grey40") +
+  labs(title = "BEAST Run 4 — total evidence timetree (30 taxa, 50M generations)")
+```
+

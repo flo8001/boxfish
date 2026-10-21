@@ -1,0 +1,83 @@
+Started Fri Feb  6 20:36:47 2026
+/muscle/bin/muscle -in muscle-I20260206-203642-0302-71998231-p1m.sequence -verbose -log muscle-I20260206-203642-0302-71998231-p1m.output -quiet -clw -out muscle-I20260206-203642-0302-71998231-p1m.clw 
+Alphabet DNA
+
+MUSCLE v3.8.425 by Robert C. Edgar
+http://www.drive5.com/muscle
+
+Profile-profile score    SPN
+Max iterations           8
+Max trees                1
+Max time                 (No limit)
+Max MB                   4294966866
+Gap open                 -400
+Gap extend (dimer)       0
+Gap ambig factor         0
+Gap ambig penalty        -0
+Center (LE)              0
+Term gaps                Half
+Smooth window length     7
+Refine window length     200
+Min anchor spacing       32
+Min diag length (lambda) 24
+Diag margin (mu)         5
+Min diag break           1
+Hydrophobic window       5
+Hydrophobic gap factor   1.2
+Smooth score ceiling     999
+Min best col score       90
+Min anchor score         90
+SUEFF                    0.1
+Brenner root MSA         False
+Normalize counts         False
+Diagonals (1)            False
+Diagonals (2)            False
+Anchors                  True
+MSF output format        False
+Phylip interleaved       False
+Phylip sequential        False
+ClustalW output format   True
+Catch exceptions         True
+Quiet                    True
+Refine                   False
+ProdfDB                  False
+Low complexity profiles  True
+Objective score          SPM
+Distance method (1)      Kmer4_6
+Clustering method (1)    UPGMB
+Root method (1)          Pseudo
+Sequence weighting (1)   ClustalW
+Distance method (2)      PctIdKimura
+Clustering method (2)    UPGMB
+Root method (2)          Pseudo
+Sequence weighting (2)   ClustalW
+
+Elapsed time 00:00:00  Peak memory use   13 MB(-2%)  Iteration   1 K-mer dist pass 1
+Elapsed time 00:00:00  Peak memory use   13 MB(-2%)  Iteration   1 K-mer dist pass 2
+Align: (NC_011319.1 Anoplocapros lenticularis mitochondrion, complete genome) (AP009175.1 Kentrocapros aculeatus mitochondrial DNA, complete genome)
+Align: (KU308378.1 Ostracion rhinorhynchos mitochondrion, complete genome) (NC_030005.1 Ostracion rhinorhynchos mitochondrion, complete genome)
+Align: (NC_072284.1 Ostracion cubicus mitochondrion, complete genome) (OP834098.1 Ostracion cubicus mitochondrion, complete genome)
+Align: (NC_072284.1 Ostracion cubicus mitochondrion, complete genome,OP834098.1 Ostracion cubicus mitochondrion, complete genome) (AP009176.1 Ostracion immaculatus mitochondrial DNA, complete genome)
+Align: (KU308378.1 Ostracion rhinorhynchos mitochondrion, complete genome,NC_030005.1 Ostracion rhinorhynchos mitochondrion, complete genome) (NC_072284.1 Ostracion cubicus mitochondrion, complete genome,OP834098.1 Ostracion cubicus mitochondrion, complete genome,AP009176.1 Ostracion immaculatus mitochondrial DNA, complete genome)
+Align: (OP035246.1 Ostracion meleagris voucher USNM:FISH:442455 mitochondrion, complete genome) (KU308378.1 Ostracion rhinorhynchos mitochondrion, complete genome,NC_030005.1 Ostracion rhinorhynchos mitochondrion, complete genome,NC_072284.1 Ostracion cubicus mitochondrion, complete genome,OP834098.1 Ostracion cubicus mitochondrion, complete genome,AP009176.1 Ostracion immaculatus mitochondrial DNA, complete genome)
+Align: (PV662073.1 Acanthostracion quadricornis voucher USNM:FISH:471096 mitochondrion, complete genome) (PV662076.1 Acanthostracion quadricornis voucher USNM:FISH:471106 mitochondrion, complete genome)
+Align: (PV662072.1 Acanthostracion polygonius voucher USNM:FISH:471095 mitochondrion, complete genome) (PV662073.1 Acanthostracion quadricornis voucher USNM:FISH:471096 mitochondrion, complete genome,PV662076.1 Acanthostracion quadricornis voucher USNM:FISH:471106 mitochondrion, complete genome)
+Align: (OP057014.1 Lactophrys bicaudalis voucher USNM:FISH:416208 mitochondrion, complete genome) (OP035078.2 Lactophrys trigonus voucher USNM:FISH:415702 mitochondrion, partial genome)
+Align: (PV662072.1 Acanthostracion polygonius voucher USNM:FISH:471095 mitochondrion, complete genome,PV662073.1 Acanthostracion quadricornis voucher USNM:FISH:471096 mitochondrion, complete genome,PV662076.1 Acanthostracion quadricornis voucher USNM:FISH:471106 mitochondrion, complete genome) (OP057014.1 Lactophrys bicaudalis voucher USNM:FISH:416208 mitochondrion, complete genome,OP035078.2 Lactophrys trigonus voucher USNM:FISH:415702 mitochondrion, partial genome)
+Align: (OP035246.1 Ostracion meleagris voucher USNM:FISH:442455 mitochondrion, complete genome,KU308378.1 Ostracion rhinorhynchos mitochondrion, complete genome,NC_030005.1 Ostracion rhinorhynchos mitochondrion, complete genome,NC_072284.1 Ostracion cubicus mitochondrion, complete genome,OP834098.1 Ostracion cubicus mitochondrion, complete genome,AP009176.1 Ostracion immaculatus mitochondrial DNA, complete genome) (PV662072.1 Acanthostracion polygonius voucher USNM:FISH:471095 mitochondrion, complete genome,PV662073.1 Acanthostracion quadricornis voucher USNM:FISH:471096 mitochondrion, complete genome,PV662076.1 Acanthostracion quadricornis voucher USNM:FISH:471106 mitochondrion, complete genome,OP057014.1 Lactophrys bicaudalis voucher USNM:FISH:416208 mitochondrion, complete genome,OP035078.2 Lactophrys trigonus voucher USNM:FISH:415702 mitochondrion, partial genome)
+Align: (NC_057981.1 Lactoria cornuta mitochondrion, complete genome) (NC_011330.1 Lactoria diaphana mitochondrion, complete genome)
+Align: (OP035246.1 Ostracion meleagris voucher USNM:FISH:442455 mitochondrion, complete genome,KU308378.1 Ostracion rhinorhynchos mitochondrion, complete genome,NC_030005.1 Ostracion rhinorhynchos mitochondrion, complete genome,NC_072284.1 Ostracion cubicus mitochondrion, complete genome,OP834098.1 Ostracion cubicus mitochondrion, complete genome,AP009176.1 Ostracion immaculatus mitochondrial DNA, complete genome,PV662072.1 Acanthostracion polygonius voucher USNM:FISH:471095 mitochondrion, complete genome,PV662073.1 Acanthostracion quadricornis voucher USNM:FISH:471096 mitochondrion, complete genome,PV662076.1 Acanthostracion quadricornis voucher USNM:FISH:471106 mitochondrion, complete genome,OP057014.1 Lactophrys bicaudalis voucher USNM:FISH:416208 mitochondrion, complete genome,OP035078.2 Lactophrys trigonus voucher USNM:FISH:415702 mitochondrion, partial genome) (NC_057981.1 Lactoria cornuta mitochondrion, complete genome,NC_011330.1 Lactoria diaphana mitochondrion, complete genome)
+Align: (NC_011319.1 Anoplocapros lenticularis mitochondrion, complete genome,AP009175.1 Kentrocapros aculeatus mitochondrial DNA, complete genome) (OP035246.1 Ostracion meleagris voucher USNM:FISH:442455 mitochondrion, complete genome,KU308378.1 Ostracion rhinorhynchos mitochondrion, complete genome,NC_030005.1 Ostracion rhinorhynchos mitochondrion, complete genome,NC_072284.1 Ostracion cubicus mitochondrion, complete genome,OP834098.1 Ostracion cubicus mitochondrion, complete genome,AP009176.1 Ostracion immaculatus mitochondrial DNA, complete genome,PV662072.1 Acanthostracion polygonius voucher USNM:FISH:471095 mitochondrion, complete genome,PV662073.1 Acanthostracion quadricornis voucher USNM:FISH:471096 mitochondrion, complete genome,PV662076.1 Acanthostracion quadricornis voucher USNM:FISH:471106 mitochondrion, complete genome,OP057014.1 Lactophrys bicaudalis voucher USNM:FISH:416208 mitochondrion, complete genome,OP035078.2 Lactophrys trigonus voucher USNM:FISH:415702 mitochondrion, partial genome,NC_057981.1 Lactoria cornuta mitochondrion, complete genome,NC_011330.1 Lactoria diaphana mitochondrion, complete genome)
+Elapsed time 00:01:14  Peak memory use 552 MB(-102%)  Iteration   1 Align node
+Elapsed time 00:01:14  Peak memory use 552 MB(-103%)  Iteration   1 Root alignment
+Elapsed time 00:01:41  Peak memory use 552 MB(-103%)  Iteration   2 Refine tree
+Elapsed time 00:01:41  Peak memory use 552 MB(-103%)  Iteration   2 Root alignment
+Elapsed time 00:01:41  Peak memory use 552 MB(-103%)  Iteration   2 Root alignment
+Anchor columns found       0
+DP area saved by anchors   0.0 %
+Elapsed time 00:04:28  Peak memory use 552 MB(-103%)  Iteration   3 Refine biparts
+Elapsed time 00:07:13  Peak memory use 552 MB(-103%)  Iteration   4 Refine biparts
+Elapsed time 00:09:58  Peak memory use 552 MB(-103%)  Iteration   5 Refine biparts
+Elapsed time 00:10:16  Peak memory use 552 MB(-103%)  Iteration   6 Refine biparts
+Elapsed time 00:10:16  Peak memory use 552 MB(-103%)  Iteration   6 Refine biparts
+Finished Fri Feb  6 20:47:03 2026

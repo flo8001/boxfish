@@ -1,0 +1,234 @@
+>Acanthostracion_polygonius
+gatatcggca ccctttattt agtatttggt gcttg-agcc ggaatagtag gaacagccct
+aagcctactc atccgagcag aactaagcca accaggcgcc cttcttgggg acgatcagat
+ttataatgtt atcgtcacag cgcatgcatt cgtaataatt ttctttatag taataccaat
+tataattgga gggtttggaa actgattagt accactaata attggagccc ctgatatagc
+attcccacgt ataaacaaca taagcttctg actcctccct ccctccttcc ttcttctcct
+agcttcatca ggagttgaag caggtgctgg gacaggctga acagtctacc cacccctagc
+gggcaatcta gctcacgcag gagcatccgt tgacttaact atcttctcac ttcatctagc
+tggggtttcc tcaattctag gggccattaa ttttatcact actattatta acataaaacc
+ccccgctatc tcccaatatc aaacacccct gtttgtttga gccgtcttaa ttactgctgt
+acttctcctc ttatcactac cagttcttgc tgctggcatt acaatactcc ttacagatcg
+aaacttaaat accactttct ttgaccccgc aggaggagga gatccaatcc tttaccaaca
+tttattctga ttcttcggtc a-
+>Acanthostracion_quadricornis
+---------- -cctttattt agtatttggt gcttg-agcc ggaatagtag ggacagccct
+aagtctactc atccgagcag aactgagcca accaggcgcc cttcttggag acgatcagat
+ttataatgtt atcgtcacag cgcatgcatt cgtaataatt ttctttatag taataccaat
+tataattgga gggtttggaa actgactagt cccactaata attggagccc ctgatatagc
+attcccccgt ataaacaaca taagcttctg acttctccct ccctccttcc tccttctcct
+agcttcatca ggagttgaag caggtgctgg gacaggctga acagtctacc cacccttagc
+gggtaaccta gcacacgcag gagcatccgt tgacttaacc atcttctcac ttcatctggc
+tggagtttcc tcaattctag gggccattaa ttttattact actattatta atataaaacc
+tcccgctatc tcccaatatc aaacacccct atttgtctga gccgtattaa ttactgctgt
+ccttcttctc ctatcactac cagttcttgc tgctggcatt acaatgctcc ttacagatcg
+aaacttaaat accaccttct ttgacccggc aggaggagga gatccaatcc tttaccaaca
+ttta------ ---------- --
+>Lactophrys_bicaudalis
+---------- -cctttattt agtattcggt gcttg-agcc gggatagtag gcacagccct
+aagcctactc atccgagcag aactaagcca accaggcgct cttcttgggg acgatcagat
+ttataatgtt attgtcacgg cacatgcatt cgtaataatt ttctttatgg taatgcctat
+cataattgga ggctttggga actgactagt tccgttaata attggagccc ctgatatagc
+attccctcga ataaataaca taagcttttg acttcttccc ccttcctttc tcctcctcct
+agcttcctca ggaattgaag caggggcagg aactggctga acagtttacc cgcccttagc
+aggaaacctg gcacacgcag gagcatctgt agacttaact attttttcac ttcatttagc
+cggagtctcc tcaattttag gggctattaa ctttattacc actattatta acataaaacc
+ccctgctatt tctcaatatc agacccccct atttgtttgg gctgtcttaa ttaccgccgt
+tcttctcctc ttatcacttc cagttcttgc tgccggcatc acaatactcc tgacagatcg
+aaacctcaac accactttct tcgacccagc aggaggtgga gacccaattc tctaccagca
+ccta------ ---------- --
+>Lactophrys_trigonus
+---------- -cctttatct agtattcggt gcttg-agcc gggatagtag gaacagccct
+aagcctactc atccgagcag aactaagcca accaggcgct cttcttgggg acgatcagat
+ttacaatgtt attgttacgg cacatgcatt cgtaataatt ttctttatag taatacccat
+cataattgga ggctttggaa actgactagt cccattaata attggggccc ctgacatagc
+attcccccgg atgaataaca taagtttttg acttcttccc ccttcctttc ttcttcttct
+agcttcatca ggagttgaag caggggcagg aactggctga actgtctacc cacccttagc
+aggaaaccta gcacacgcag gagcatctgt agatttaact attttctccc ttcatctagc
+cggagtctcc tcaattttag gagctattaa ctttattact accattatca acataaaacc
+ccctgccatt tctcaatatc agacccccct atttgtttgg gctgtcttaa ttaccgccgt
+tcttctcctc ctatcactac cagttcttgc tgccggcatc acaatgcttc tgacagatcg
+aaacctcaac accaccttct tcgacccggc aggaggcgga gaccctattc tttatcaaca
+ctta------ ---------- --
+>Lactoria_cornuta
+---------- -cctttatct agtatttggt gcttg-agcc ggtatagtgg gaacagctct
+aagcctactt atccgagcag aattaagcca accaggcgct cttcttgggg atgaccagat
+ttataatgta atcgtcacag cacatgcatt tgtaataatt ttctttatag taataccaat
+tataattgga ggcttcggaa actgactagt acctctaata attggggccc ctgatatagc
+atttccccgg atgaataata taagcttttg acttcttccc ccttctttcc tccttctcct
+agcctcctca ggagttgaag cgggtgcagg aactggttga acagtttacc ctcctctggc
+aggtaaccta gcacatgcag gggcatctgt ggatttaacc atcttctcac tacatctggc
+aggagtttcc tcaattttag gagctattaa tttcattacc acgatcatta atatgaaacc
+ccctgctatc tctcaatatc aaacccctct attcgtatga gcagtcttaa ttaccgctgt
+cctacttctc ttatcacttc cagtccttgc agccggcatc acaatacttc taactgaccg
+aaaccttaat accacattct ttgatcccgc agggggagga gatccaattc tctatcaaca
+ctta------ ---------- --
+>Lactoria_diaphana
+gatatcggca ccctttattt agtatttggt gcttg-agcc ggtatagtgg gcaccgccct
+aagcctactt atccgagcag aattaagcca gccaggagcc cttcttgggg atgaccagat
+ttataatgtt atcgttacag cacacgcatt tgtaataatt ttctttatag taataccaat
+cataattgga ggctttggga actgactagt tccccttatg attggggccc ccgatatagc
+attcccccga ataaataaca tgagcttctg acttcttccc ccctccttcc tcctcctgct
+agcctcctca ggagttgaag ccggtgctgg aactggttga acagtttatc cccctttagc
+aggcaacctg gcccacgcag gggcatctgt tgatttgacc attttttcat tacatctagc
+aggggtttca tcaattttag gggctattaa ttttattacc acaattatta acatgaaacc
+ccctgctatt tctcaatacc aaactccact atttgtatga gcagtattaa tcaccgctgt
+tctcctcctt ctatcacttc cagtccttgc agccggcatt acaatacttc taaccgaccg
+aaatctaaac accacattct ttgaccccgc aggaggggga gacccaattc tttatcaaca
+cttattctga ttctttggc- --
+>Ostracion_cubicus
+gatatcggca ccctttattt agtatttggt gcttg-agcc ggtatagtgg gaacggccct
+aagcctactt atccgagcag aactaagcca accaggcgct cttcttgggg atgatcagat
+ttataatgta atcgtaacag cacatgcatt tgtaataatt ttctttatag taatgccaat
+tataattgga ggttttggaa actgattagt acctctaata attggagctc ctgatatagc
+atttccccga ataaataaca taagcttctg gcttcttcct ccctccttcc tcctcctcct
+ggcctcttca ggggttgagg caggagctgg aactgggtga acagtctatc cccccttagc
+aggcaacctg gcacatgcag gggcatctgt agatctaacc atcttttccc tccatctggc
+aggggtttcc tcaattttag gggctattaa ttttattacc acaattatta acataaaacc
+cccagctatc tcccaatatc aaacccctct atttgtgtgg gcagttctga ttaccgctgt
+cctcctcctt ctatcactgc cagttcttgc tgctggtatt acaatacttc taacagaccg
+aaacctaaac accacattct ttgacccagc aggaggaggg gacccaatcc tttatcaaca
+cttattctga ttcttcggtc at
+>Ostracion_immaculatus
+---------- -cctttattt agtatttggt gcttg-agcc ggtatagtgg gaacggccct
+aagcctactt atccgagcag aactaagcca accaggcgct cttcttgggg atgatcagat
+ttataatgta atcgtaacag cacatgcatt tgtaataatt ttctttatag taatgccaat
+tataattgga ggttttggaa actgattagt acctctaata attggagctc ctgatatagc
+atttccccga ataaataaca taagcttctg gcttcttcct ccctccttcc tcctcctcct
+ggcctcttca ggggttgagg caggagctgg aactgggtga acagtctatc cccccttagc
+aggcaacctg gcacatgcag gggcatctgt agatctaacc atcttttccc tccatctggc
+aggggtttcc tcaattttag gggctattaa ttttattacc acaattatta acataaaacc
+cccagctatc tcccaatatc aaacccctct atttgtgtgg gcagttctga ttaccgctgt
+cctcctcctt ctatcactgc cagttcttgc tgctggtatt acaatacttc taacagaccg
+aaacctaaac accacattct ttgacccagc aggaggaggg gacccaatcc tttatcaaca
+ctta------ ---------- --
+>Ostracion_meleagris
+---------- -cctctattt agtatttggt gcttg-agcc ggtatagtag ggacggccct
+aagcctactt atccgagcag aactaagcca gccaggcgct cttcttgggg atgatcagat
+ttataatgta atcgtaacag cacatgcatt tgtaataatt ttctttatag taatgccaat
+tataattgga ggctttggaa actgattagt acctctaata attggagccc ctgatatagc
+atttccccga atgaacaaca taagcttctg gctccttcct ccttcattcc tactcctcct
+ggcctcttca ggagttgaag caggtgctgg aactgggtga acagtttatc ctcccttagc
+aggtaacctg gcacatgcag gggcatctgt tgatctaacc atcttttccc tccatctggc
+aggagtttcc tcaattttag gggctattaa ttttatcacc acaattatta atatgaaacc
+cccagctatc tcccaatatc aaacccctct atttgtgtgg gcagttctga ttaccgctgt
+tctcctcctt ctatcactac cagttcttgc tgctggtatc acaatacttc taacagaccg
+aaacctaaac accacattct ttgacccagc aggaggcggg gacccaatcc tttatcaaca
+ctta------ ---------- --
+>Ostracion_rhinorhynchos
+---------- -cctctattt agtatttggt gcttg-agcc -gtatagtgg gaacggccct
+aagcctactt atccgagcag aactaagcca accaggcgct cttcttgggg acgatcaaat
+ttataatgta atcgtaacag cacatgcatt tgtaataatc ttctttatag taataccaat
+tataattgga ggttttggaa actgactagt acctctaata attggagccc ctgatatagc
+atttccccga ataaataaca taagcttctg gctccttccc ccttccttcc tcctcctcct
+agcctcttca ggagttgaag caggtgctgg aactggatga acagtctatc cccccttagc
+aggtaacctg gcacatgcag gagcatctgt agatctaacc atcttttctc tccacctagc
+aggtgtttcc tcaattttag gggctattaa tttcattacc acaattatta acataaaacc
+cccagctatc tcccaatatc aaacccctct atttgtgtgg gcagtactga ttaccgctgt
+cctcctcctt ctatcactgc cagttcttgc tgctggtatt acaatacttc taacagaccg
+aaacctaaac accacattct ttgacccggc agggggtggg gacccaatcc tttatcaaca
+ctta------ ---------- --
+>Ostracion_solorensis
+gatatcggca ccctctattt agtatttggt gcttg-agcc ggtatagtgg gaacggccct
+aagcctactc atccgagcag aactaagcca accaggcgct cttcttgggg atgatcagat
+ttataatgta atcgtaacag cacatgcatt tgtaataatt ttctttatag taataccaat
+cataattgga ggttttggaa actgattagt acctctaata attggagccc ccgatatagc
+attcccccga ataaataaca taagcttctg gctccttcct ccttccttcc tcctcctcct
+ggcctcttca ggagttgaag caggtgctgg aactgggtga acagtttatc cccccttagc
+aggcaacctg gcacatgcag gagcatctgt agatctaacc atcttttccc tccatttggc
+aggggtttcc tcaattttag gggccattaa ttttattacc acaattatta acataaaacc
+cccggccatc tcccaatatc aaacccctct atttgtatgg gcggttctga ttaccgctgt
+cctacttctc ctatcactgc cagttcttgc tgctggtatt acaatacttc taacggaccg
+aaacctaaac accacattct ttgacccggc aggaggcgga gacccaatcc tttatcaaca
+cttattctga ttcttcggtc a-
+>Ostracion_whitleyi
+gacattggca ccctctattt agtatttggt gcttg-agcc ggtatagtgg gaacggccct
+aagcctactc atccgagcag aactaagcca accaggcgct cttcttgggg atgatcagat
+ttataatgta atcgtaacag cacatgcatt tgtaataatt ttctttatag taataccaat
+cataattgga ggttttggaa actgattagt acctctaata attggagccc ccgatatagc
+attcccccga ataaataaca taagcttctg gctccttcct ccttccttcc tcctccttct
+ggcctcttca ggagttgaag caggtgctgg aactgggtga acagtttatc cccccttagc
+aggcaacctg gcacatgcag gagcatctgt agatctaacc atc-tttccc tccatttggc
+aggggtttcc tcaattttag gggccattaa ttttattacc acaattatta acataaaacc
+cccggccatc tcccaatatc aaacccctct atttgtatgg gcggttctga ttaccgctgt
+cctacttctc ctatcactgc cagttcttgc tgctggtatt acaatacttc taacggaccg
+aaacctaaac accacattct ttgacccggc aggaggcgga gacccaatcc tttatcaaca
+cttattctga ttctttggcc a-
+>Rhinesomus_triqueter
+gatatcggca ccctttattt agtatttggt gcttg-agcc ggtatagtag ggacagccct
+aagcctactc atccgagcag aactgagcca accaggcgct ctccttgggg atgatcagat
+ttacaatgtt attgtcacgg cacatgcatt cgtgataatt ttctttatag ttatacccat
+cataatcgga ggttttggaa actgactagt cccattaata attggggccc ccgacatagc
+atttccccga ataaataaca taagcttttg acttcttccc ccttcctttc ttcttctcct
+agcttcatca ggagttgaag caggggcagg aactggttgg acagtttacc cgcccttagc
+aggaaaccta gcacacgcgg gagcatccgt agatttaact attttttcac ttcatctagc
+gggagtctcc tcaattctag gggctattaa ttttattacc accattatta acataaaacc
+ccctgctatc tctcaatatc aaaccccctt atttgtttgg gctgtcttaa ttaccgccgt
+tcttctcctc ttatctctac cagttcttgc tgccggcatc acaatgctcc taacagaccg
+aaatctcaac accaccttct ttgacccagc aggaggcgga gacccaatcc tctaccaaca
+cctattctga ttcttcggtc a-
+>Rhynchostracion_nasus
+---------- -cctctattt agtatttggt gc-tg-agcc ggtatagtgg gaacggccct
+aagcctactt atccgggcgg aactaagcca accaggcgct cttcttgggg atgatcagat
+ttataatgta attgtaacag cacatgcatt tgtaataatt ttctttatag taataccaat
+tataattgga ggttttggaa actgattagt gcctctaata attggagccc ctgatatagc
+atttcctcga ataaataaca tgagcttctg gctccttcct ccttccttcc tactcctcct
+agcctcttca ggagttgaag caggtgctgg aactgggtga acagtctatc ctcccttagc
+aggtaacctg gcacatgcgg gggcatctgt agacctaacc atcttttctc tccatctggc
+aggggtttcc tcaattttag gggctattaa ttttattacc acaattatta acataaaacc
+cccagctatc tcccaatatc aaacccctct atttgtatgg gcagtcctga ttaccgctgt
+cctcctcctt ttatcactgc cagttcttgc tgctggtatt acaatgcttc taacagaccg
+aaatctaaac accacattct ttgacccagc aggaggcggg gacccaatcc tttatcaaca
+ctta------ ---------- --
+>Tetrosomus_concatenatus
+---------- -cctttattt agtatttggt gcttg-agcc ggcatagtgg ggacagcctt
+aagcctactt atccgagcag aactaagcca gccaggtgct cttcttgggg atgatcaaat
+ttataacgtg atcgttacag cacatgcgtt tgtaataatt ttctttatag taataccaat
+catgattgga ggatttggaa actgactggt acccctaata attggagccc ctgatatagc
+atttccccga atgaataaca taagcttctg actcctccct ccctccttcc tccttctcct
+ggcctcctca ggggttgaag caggcgcagg aactggctga acagtctatc cccctttagc
+aggcaatcta gcacacgcag gagcatctgt tgatttaacc atcttttcac ttcacctagc
+gggggtctcc tcgattttag gtgctattaa ttttattacc actattatca acatgaagcc
+tcctgctatt tcccaatatc agacccccct attcgtatgg gcagttttaa ttaccgccgt
+tcttctcctt ctatcactac cagttcttgc tgccggcatt acaatgctcc tgacagaccg
+aaacctaaat accacattct ttgacccagc agggggagga gaccctattc tttatcaaca
+ctta------ ---------- --
+>Tetrosomus_fornasini
+---------- -cctttattt agtatttggt gcttg-agcc ggcatagtag gcacagcctt
+aagtctactt atccgagcag aactaagcca gccaggcgct cttcttgggg acgatcagat
+ttataatgtg atcgtcacag cacatgcatt tgtaataatt ttctttatag taataccaat
+tataattgga gggtttggaa actgactagt acctttaata attggagccc ccgatatagc
+atttccccga ataaacaaca taagcttctg acttctccct ccctctttcc tcctcctcct
+ggcttcttca ggagttgaag caggcgctgg aactggctga acagtatatc ctcctttagc
+tggcaaccta gcacacgcag gggcatctgt tgatttaacc atcttctccc ttcacctagc
+aggggtttcc tcaattttag gagctattaa ttttattacc actattatta acataaaacc
+ccctgctatc tcccaatatc agacccctct atttgtatga gcagttttaa ttaccgctgt
+tctcctcctc ctatcactac cagttcttgc tgccgggatt actatacttc taactgaccg
+aaacctaaat accaccttct ttgacccagc aggaggaggg gaccccattc tttatcaaca
+ccta------ ---------- --
+>Tetrosomus_gibbosus
+gacattggca ccctttattt agtatttggt gcttg-agcc ggcatagtgg ggacagcctt
+aagcctactt atccgagccg aactaagcca gccaggcgct cttcttggag acgatcagat
+ttataatgta atcgttacag cacatgcatt cgtaataatt ttctttatag taataccaat
+catgattggg gggtttggaa actgactggt gcccctaata attggggccc ctgatatagc
+atttccccga atgaataaca taagcttctg actcctccct ccctccttcc tccttctcct
+ggcctcatca ggggttgaag caggcgctgg aactggctga acagtttatc ccccgttagc
+aggcaatcta gcacatgcag gggcatctgt tgatttaacc atcttttcac ttcacctagc
+agggatctcc tcgattttag gtgctattaa ttttattact actattatta acatgaagcc
+ccctgctatt tctcaatatc aaacccctct gttcgtatgg gcagttttaa ttaccgccgt
+tcttctcctt ctatcactac cagttcttgc tgccggtatt acaatgcttc taacagaccg
+aaacctaaac accacattct ttgaccctgc agggggagga gaccccattc tttatcaaca
+cttattctga ttctttggcc a-
+>Tetrosomus_reipublicae
+gatatcggca ccctttattt agtatttggt gcttg-ggcc ggcatagtgg ggacagcctt
+aagcctactt attcgagcag aactaagcca gccaggtgct cttcttgggg atgatcaaat
+ttataacgtg atcgttacag cacatgcgtt tgtaataatt ttctttatag taataccaat
+catgattgga gggtttggaa actgactggt acccctaata attggagccc ctgatatagc
+atttccccga atgaataaca taagcttctg actcctccct ccctccttcc tccttctcct
+ggcctcctca ggggttgaag caggcgctgg aactggctga acagtctatc cccctttagc
+aggcaatcta gcacacgcag gagcatctgt tgatttaacc atcttttcac ttcacctagc
+gggggtctcc tcgattttag gtgctattaa ttttattacc actattatca acatgaagcc
+tcctgctatt tcccaatatc aaacccccct attcgtatgg gcagttttaa ttaccgccgt
+tcttctcctt ctatcactac cagttcttgc tgccggcatt acaatgctcc taacagaccg
+aaacctaaat accacattct ttgacccagc agggggaggg gaccctattc tttatcaaca
+cttattctga ttcttcggtc a-
