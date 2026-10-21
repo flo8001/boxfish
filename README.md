@@ -57,17 +57,7 @@ NCBI sequences >10 kb filtered (to exclude accidental full mitogenomes).
 - 30 taxa × 27,410 characters: 27,290 molecular (31 loci) + 120 morphological
 - `analyses/beast/supermatrix/molecular_30taxa.nex`, `morpho_30taxa.nex`, `partitions.txt`
 
-### 7. IQ-TREE gene trees
-- GTR+G, 1000 ultrafast bootstraps, run on Hoffman2
-- 27/31 loci produced trees (4c4, ficd, hoxc6a, kiaa1239 skipped — <4 taxa)
-- Gene trees stored on Hoffman2: `~/boxfish/gene_trees/*.treefile`
-
-### 8. ASTRAL coalescent species tree
-- Input: 27 gene trees
-- Output: `analyses/trees/astral_species_tree_final.tre`
-- Root age ~55 Ma (unrooted; rooted on *Triodon* in R)
-
-### 9. BEAST2 total evidence timetree (Run 4 — final)
+### 7. BEAST2 total evidence timetree (Run 4 — final)
 
 **Model:**
 - 31 molecular partitions: GTR+G (unlinked site models)
@@ -117,7 +107,6 @@ Boxfish/
 │   │   └── supermatrix/                  ← molecular_30taxa.nex, morpho_30taxa.nex, partitions.txt
 │   ├── lastz_out/                        ← LASTZ MAF files (mitogenomes vs reference)
 │   └── trees/
-│       └── astral_species_tree_final.tre ← ASTRAL coalescent species tree
 ├── data/
 │   ├── loci/
 │   │   ├── aligned/                      ← ★ Final per-locus alignments (mito + nuclear)
@@ -149,8 +138,6 @@ Boxfish/
 |------|---------|-----|
 | LASTZ | 1.04 | Mitogenome pairwise alignment |
 | MAFFT | 7.x | Per-locus multiple sequence alignment |
-| IQ-TREE2 | 2.x | ML gene trees |
-| ASTRAL | 5.7 | Coalescent species tree |
 | BEAST2 | 2.7.7 | Bayesian total evidence timetree |
 | LogCombiner | 2.7.7 | Chain merging + burnin |
 | TreeAnnotator | 2.7.7 | MCC tree summarization |
